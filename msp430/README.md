@@ -11,7 +11,7 @@
 
 **If projects do not appear** in the `Project Explorer` pane :
 
-1. Go to `File > Import...`, select `CCS Projects`, click `Next >`
+1. Go to `File > Import...`, select `C/C++ > CCS Projects`, click `Next >`
 2. Browse to select `biomed-a21/msp430` (the entire workspace) as the search-directory, the select all 3 projects (`sender`, `receiver` and `shared`) to import them.
 
 ### Creating new project
