@@ -2,8 +2,8 @@
 
 ## Projects
 
-- [MSP-430](./msp430/README.md)
-- [Python](./python/README.md)
+- [MSP-430](./msp430)
+- [Python](./python)
 
 ## Collaborators
 
