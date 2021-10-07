@@ -1,6 +1,6 @@
-#include <uart.h>
-#include <utils.h>
 #include <msp430.h>
+#include "uart.h"
+#include "utils.h"
 
 
 void setup_uart() {
@@ -17,4 +17,24 @@ void setup_uart() {
     UNSET(UCA1CTL1, UCSWRST); // step 7
 
     SET(UCA1IE, UCRXIE); // step 8
+}
+
+void send_uart_data(char *data, unsigned char length, char start_bit, char end_bit) {
+    send_uart_byte(start_bit);
+
+    while (length > 0) {
+        send_uart_byte(*data);
+        length--;
+        data++;
+    }
+
+    send_uart_byte(end_bit);
+
+    // TODO needed?
+    // while(UCA1STAT & UCBUSY); // wait for last byte to be sent
+}
+
+void send_uart_byte(char byte) {
+    while(!(UCA1IFG & UCTXIFG)); // Wait for TX buffer to be ready for new data
+    UCA1TXBUF = byte; // put data in buffer
 }
