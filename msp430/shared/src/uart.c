@@ -19,8 +19,10 @@ void setup_uart() {
     SET(UCA1IE, UCRXIE); // step 8
 }
 
-void send_uart_data(char *data, unsigned char length, char start_bit, char end_bit) {
-    send_uart_byte(start_bit);
+void send_uart_data(char *data, unsigned char length, char start_byte, char end_byte) {
+    if (start_byte != 0) {
+        send_uart_byte(start_byte);
+    }
 
     while (length > 0) {
         send_uart_byte(*data);
@@ -28,7 +30,9 @@ void send_uart_data(char *data, unsigned char length, char start_bit, char end_b
         data++;
     }
 
-    send_uart_byte(end_bit);
+    if (end_byte != 0) {
+        send_uart_byte(end_byte);
+    }
 
     // TODO needed?
     // while(UCA1STAT & UCBUSY); // wait for last byte to be sent
@@ -36,5 +40,6 @@ void send_uart_data(char *data, unsigned char length, char start_bit, char end_b
 
 void send_uart_byte(char byte) {
     while(!(UCA1IFG & UCTXIFG)); // Wait for TX buffer to be ready for new data
+    // __delay_cycles(1000);
     UCA1TXBUF = byte; // put data in buffer
 }

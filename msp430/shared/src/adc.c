@@ -7,7 +7,6 @@ void setup_adc() {
     SET(P6SEL, BIT0); // step 2
     UNSET(REFCTL0, REFMSTR); // step 3
     OVERWRITE(ADC12CTL0, ADC12ON + ADC12REFON + /*ADC12SHT10 +*/ ADC12REF2_5V); // step 4
-                                                                                // TODO ADC12SHT00 value??
     OVERWRITE(ADC12CTL1, ADC12SHP); // step 5
     OVERWRITE(ADC12MCTL0, ADC12SREF0); // step 6
 

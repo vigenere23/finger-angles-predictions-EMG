@@ -1,7 +1,6 @@
 #include <msp430.h>
-#include <timer.h>
-#include <utils.h>
-#include <assert.h>
+#include "timer.h"
+#include "utils.h"
 
 /*
  * @param UCSCTL2_value = clock_frequency (Hz) / 32768 Hz - 1
