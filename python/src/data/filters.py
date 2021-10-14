@@ -1,28 +1,30 @@
+## TODO NOT UP TO DATE
+
+from __future__ import annotations
 from abc import ABC, abstractmethod
-from typing import Optional, Generic
+from typing import Any, Generic
 import struct
 from numpy import cos
-from src.utils import SizedFifo
-from src.types import InputData, OutputData
+from src.data.utils import SizedFifo
+from src.data.types import OutputType
 
 
-class Filter(ABC, Generic[InputData, OutputData]):
+class Filter(ABC, Generic[OutputType]):
     @abstractmethod
-    def apply(self, data: InputData) -> OutputData:
+    def apply(self, data: Any) -> OutputType:
         raise NotImplementedError()
 
 
-class BytesToInt(Filter[bytes, Optional[int]]):
-    def apply(self, data: bytes) -> Optional[int]:
+class BytesToInt(Filter[int]):
+    def apply(self, data: bytes) -> int:
+        # print(data)
         try:
-            unpacked = struct.unpack('>H', data)
-            return unpacked[0]
+            return struct.unpack('>H', data)[0]
         except struct.error:
-            print(f'Failed to convert bytes message {data} to integer')
-            return None
+            raise RuntimeError(f'Failed to convert bytes message {data} to integer')
 
 
-class LowPassIIR(Filter[int, int]):
+class LowPassIIR(Filter[int]):
     def __init__(self, window_size: int):
         self.__N = window_size
         self.__x_history = SizedFifo[int](window_size)
@@ -43,8 +45,9 @@ class LowPassIIR(Filter[int, int]):
         return y_n
 
 
-class NotchDC(Filter[int, int]):
+class NotchDC(Filter[int]):
     def __init__(self, R: float):
+        super().__init__()
         self.__R = R
         self.__x_nm1 = 0
         self.__y_nm1 = 0
@@ -61,7 +64,7 @@ class NotchDC(Filter[int, int]):
         return y_n
 
 
-class NotchFrequency(Filter[int, int]):
+class NotchFrequency(Filter[int]):
     def __init__(self, R: float, frequency: float, frequency_range: float):
         wn = frequency / (frequency_range / 2)
         self.__R = R
