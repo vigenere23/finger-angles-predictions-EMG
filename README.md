@@ -8,5 +8,5 @@
 ## Collaborators
 
 - Gabriel St-Pierre ([@vigenere23](https://github.com/vigenere23))
-- Olivier Gingras ([@olgin2](https://github.com/olgin2))
-- Auguste Aka Tiemele
+- Emmanuel N'Goran ([@EmmanuelNGoran](https://github.com/EmmanuelNGoran))
+- Auguste Aka Tiemele ([@Junior Tiemele](https://github.com/xx-code))
