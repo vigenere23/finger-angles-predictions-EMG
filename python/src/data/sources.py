@@ -1,10 +1,8 @@
-from queue import Queue
-import multiprocessing
 from serial import Serial
 import random
 from abc import ABC, abstractmethod
-from typing import Iterator, Generic, Union
-from src.utils.queues import QueueFetchingStrategy
+from typing import Iterator, Generic
+from src.utils.queues import NamedQueue, QueueFetchingStrategy
 from src.utils.types import OutputType
 
 
@@ -55,7 +53,7 @@ class SerialDataSource(DataSource[bytes]):
 
 
 class QueueSource(DataSource[OutputType], Generic[OutputType]):
-    def __init__(self, queue: Union[Queue, multiprocessing.Queue], strategy: QueueFetchingStrategy):
+    def __init__(self, queue: NamedQueue, strategy: QueueFetchingStrategy):
         self.__queue = queue
         self.__strategy = strategy
 

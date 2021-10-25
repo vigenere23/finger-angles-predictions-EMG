@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from multiprocessing import Queue
 from os import path
 from pathlib import Path
 from datetime import datetime
@@ -21,9 +20,8 @@ class Experiment(ABC):
 
 
 class SerialExperiment(Experiment):
-    def __init__(self, csv_queue: Queue, plot_queue: Queue) -> None:
-        self.__plot_queue = plot_queue
-        self.__csv_queue = csv_queue
+    def __init__(self, queue: NamedQueue) -> None:
+        self.__queue = queue
 
     def create_executor(self) -> Executor:
         logger = ConsoleLogger(prefix="[serial]")
@@ -36,12 +34,30 @@ class SerialExperiment(Experiment):
             batch_size=10
         )
         handlers = [
+            AddToQueue(queue=self.__queue, strategy=NonBlockingPut()),
+        ]
+
+        executor = HandlersExecutor(source=source, handlers=handlers)
+        executor = Retryer(executor=executor, nb_retries=5)
+
+        return executor
+
+
+class ProcessingExperiment(Experiment):
+    def __init__(self, source_queue: NamedQueue, csv_queue: NamedQueue, plot_queue: NamedQueue) -> None:
+        self.__source_queue = source_queue
+        self.__plot_queue = plot_queue
+        self.__csv_queue = csv_queue
+
+    def create_executor(self) -> Executor:
+        logger = ConsoleLogger(prefix="[processing]")
+        source = QueueSource(queue=self.__source_queue, strategy=BlockingMultiProcessFetch())
+        handlers = [
             ToInt(),
             AddTimestamp(),
+            Time(logger=logger),
             AddToQueue(queue=self.__plot_queue, strategy=NonBlockingPut()),
             AddToQueue(queue=self.__csv_queue, strategy=NonBlockingPut()),
-            Time(logger=logger),
-            # Print(logger=logger),
         ]
 
         executor = HandlersExecutor(source=source, handlers=handlers)
@@ -51,7 +67,7 @@ class SerialExperiment(Experiment):
 
 
 class CSVExperiment(Experiment):
-    def __init__(self, queue: Queue) -> None:
+    def __init__(self, queue: NamedQueue) -> None:
         self.__queue = queue
 
     def create_executor(self) -> Executor:
@@ -67,7 +83,7 @@ class CSVExperiment(Experiment):
 
 
 class PlottingExperiment(Experiment):
-    def __init__(self, plot: RefreshingPlot, queue: Queue) -> None:
+    def __init__(self, plot: RefreshingPlot, queue: NamedQueue) -> None:
         self.__plot_strategy = BatchPlotUpdate(plot=plot, window_size=20, batch_size=100)
         self.__queue = queue
 
@@ -76,7 +92,6 @@ class PlottingExperiment(Experiment):
         source = QueueSource(queue=self.__queue, strategy=BlockingMultiProcessFetch())
         handlers = [
             Plot(strategy=self.__plot_strategy),
-            # Print(logger=logger),
         ]
 
         executor = HandlersExecutor(source=source, handlers=handlers)
@@ -97,4 +112,4 @@ class QueuesAnalyzer(Executor):
             for queue in self.__queues:
                 size = queue.queue.qsize()
                 total = queue.maxsize
-                self.__logger.log(f'  {queue.name} : {size}/{total} ({size/total*100}%)')
+                self.__logger.log(f'  {queue.name} : {size}/{total} ({round(size/total*100, 2)}%)')
