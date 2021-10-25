@@ -1,6 +1,7 @@
 from multiprocessing import Process
 from threading import Thread
 from time import sleep
+import time
 from src.data.executors import Executor
 
 
@@ -24,3 +25,15 @@ class ExecutorProcess(Process):
     def run(self) -> None:
         while True:
             self.__executor.execute()
+
+
+class SleepingExecutorProcess(Process):
+    def __init__(self, name: str, executor: Executor, sleep_time: float) -> None:
+        super().__init__(name=name)
+        self.__executor = executor
+        self.__sleep_time = sleep_time
+    
+    def run(self) -> None:
+        while True:
+            self.__executor.execute()
+            time.sleep(self.__sleep_time)
