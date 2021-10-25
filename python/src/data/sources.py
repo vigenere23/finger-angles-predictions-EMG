@@ -1,7 +1,9 @@
+from datetime import datetime
 from serial import Serial
 import random
 from abc import ABC, abstractmethod
 from typing import Iterator, Generic
+from src.data.data import SourceData
 from src.utils.queues import NamedQueue, QueueFetchingStrategy
 from src.utils.types import OutputType
 
@@ -21,7 +23,7 @@ class TestSource(DataSource[bytes]):
             yield data
 
 
-class SerialDataSource(DataSource[bytes]):
+class SerialDataSource(DataSource[SourceData[bytes]]):
     def __init__(self, port: str, baudrate: int, start_byte: bytes, stop_byte: bytes, batch_size: int, message_size: int):
         serial = Serial(port=port, baudrate=baudrate)
         serial.reset_input_buffer()
@@ -34,22 +36,24 @@ class SerialDataSource(DataSource[bytes]):
         self.__message_size = message_size
 
     def get(self) -> Iterator[bytes]:
+        start = datetime.now()
+
         self.__serial.inWaiting()
         self.__serial.read_until(self.__start_byte)
         data = self.__serial.read(self.__message_size * self.__batch_size - 1)
         data = self.__start_byte + data
 
-        if not (self.verify_start_bytes(data) and self.verify_end_bytes(data)):
-            raise RuntimeError("Corrupted data found... retrying")
+        end = datetime.now()
 
-        for x in zip(*(data[i::self.__message_size] for i in range(1, self.__message_size-1))):
-            yield x
-
-    def verify_start_bytes(self, data: bytes):
-        return data[0::self.__message_size] == self.__start_byte * self.__batch_size
-
-    def verify_end_bytes(self, data: bytes):
-        return data[self.__message_size-1::self.__message_size] == self.__stop_byte * self.__batch_size
+        yield SourceData(
+            value=data,
+            start=start,
+            end=end,
+            start_byte=self.__start_byte,
+            stop_byte=self.__stop_byte,
+            message_size=self.__message_size,
+            length=self.__batch_size,
+        )
 
 
 class QueueSource(DataSource[OutputType], Generic[OutputType]):

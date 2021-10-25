@@ -7,7 +7,7 @@ from src.data.savers import CSVSaver
 from src.utils.loggers import ConsoleLogger
 from src.data.executors import Executor
 from src.data.sources import QueueSource, SerialDataSource
-from src.data.handlers import Print, ToInt, AddTimestamp, AddToQueue, Time, Plot
+from src.data.handlers import Print, ProcessFromUART, ToInt, AddTimestamp, AddToQueue, Time, Plot, ToTuple
 from src.data.executors import HandlersExecutor, Retryer
 from src.utils.plot import RefreshingPlot, BatchPlotUpdate
 from src.utils.queues import BlockingMultiProcessFetch, NamedQueue, NonBlockingPut
@@ -53,8 +53,8 @@ class ProcessingExperiment(Experiment):
         logger = ConsoleLogger(prefix="[processing]")
         source = QueueSource(queue=self.__source_queue, strategy=BlockingMultiProcessFetch())
         handlers = [
+            ProcessFromUART(),
             ToInt(),
-            AddTimestamp(),
             Time(logger=logger),
             AddToQueue(queue=self.__plot_queue, strategy=NonBlockingPut()),
             AddToQueue(queue=self.__csv_queue, strategy=NonBlockingPut()),
@@ -74,6 +74,7 @@ class CSVExperiment(Experiment):
         logger = ConsoleLogger(prefix='[csv]')
         source = QueueSource(queue=self.__queue, strategy=BlockingMultiProcessFetch())
         handlers = [
+            ToTuple(),
             CSVSaver(file=path.join(Path.cwd(), 'data', str(datetime.now().timestamp()), 'emg.csv'), batch_size=500)
         ]
 
@@ -91,6 +92,7 @@ class PlottingExperiment(Experiment):
         logger = ConsoleLogger(prefix='[plot]')
         source = QueueSource(queue=self.__queue, strategy=BlockingMultiProcessFetch())
         handlers = [
+            ToTuple(),
             Plot(strategy=self.__plot_strategy),
         ]
 

@@ -40,7 +40,8 @@ class Retryer(Executor):
                 failed = False
                 break
             except Exception as e:
-                print(f'### Exception : {e}')
+                print(f'### Exception ({e.__class__}) : {e}')
+                print(e.with_traceback())
 
         if failed:
             raise RuntimeError('Maximum number of retries exceeded')
