@@ -32,6 +32,8 @@ void setup_uart(const UARTConfig* config) {
     SET(UCA1CTL1, UCSWRST); // step 2
     SET(UCA1CTL1, UCSSEL__SMCLK); // step 3
 
+    // SET(UCA1CTL0, UCPEN); // enable odd parity
+
     // baud rate = 8000000 / (UCA1BR1 * 256 + UCA1BR0)
     // <=> UCA1BR1 * 256 + UCA1BR0 = 8 000 000 / 115200 = 69.4444
     OVERWRITE(UCA1BR0, 69); // step 4 - 115200 bps^2

@@ -3,7 +3,9 @@ from serial import Serial
 import random
 from abc import ABC, abstractmethod
 from typing import Iterator, Generic
+from serial.serialutil import PARITY_NONE, PARITY_ODD
 from src.data.data import SourceData
+from src.utils.loggers import Logger
 from src.utils.queues import NamedQueue, QueueFetchingStrategy
 from src.utils.types import OutputType
 
@@ -24,14 +26,18 @@ class TestSource(DataSource[bytes]):
 
 
 class SerialDataSource(DataSource[SourceData[bytes]]):
-    def __init__(self, port: str, baudrate: int, sync_byte: bytes, check_byte: bytes):
-        serial = Serial(port=port, baudrate=baudrate)
+    def __init__(self, port: str, baudrate: int, sync_byte: bytes, check_byte: bytes, logger: Logger, use_parity: bool = False, verbose: bool = False):
+        parity = PARITY_ODD if use_parity else PARITY_NONE
+        serial = Serial(port=port, baudrate=baudrate, parity=parity)
+
         serial.reset_input_buffer()
         serial.reset_output_buffer()
 
         self.__serial = serial
         self.__sync_byte = sync_byte
         self.__check_byte = check_byte
+        self.__logger = logger
+        self.__verbose = verbose
 
     def get(self) -> Iterator[bytes]:
         self.__serial.inWaiting()
@@ -48,6 +54,11 @@ class SerialDataSource(DataSource[SourceData[bytes]]):
         check_byte = self.__serial.read(1)
 
         end = datetime.now()
+
+        if self.__verbose:
+            self.__logger.log(f'config: {config} (channels: {nb_channels}, message_length: {message_length}, data_length: {data_length})')
+            self.__logger.log(f'data: {data}')
+            self.__logger.log(f'check: {check_byte}')
 
         if check_byte != self.__check_byte:
             raise RuntimeError('Did not received the expected UART packet')

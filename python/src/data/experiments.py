@@ -30,13 +30,16 @@ class SerialExperiment(Experiment):
             baudrate=115200,
             sync_byte=b'\n',
             check_byte=b'\xFF',
+            # use_parity=True, TODO parity not working
+            logger=logger,
+            # verbose=True
         )
         handlers = [
             AddToQueue(queue=self.__queue, strategy=NonBlockingPut()),
         ]
 
         executor = HandlersExecutor(source=source, handlers=handlers)
-        executor = Retryer(executor=executor, nb_retries=5)
+        executor = Retryer(executor=executor, nb_retries=10)
 
         return executor
 
