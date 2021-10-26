@@ -1,7 +1,7 @@
-from typing import Generic, List, TypeVar
+from typing import Generic, Iterator, List, TypeVar
 
 
-ListItem = TypeVar('ListItem', float, int)
+ListItem = TypeVar('ListItem')
 
 
 class SizedFifo(Generic[ListItem]):
@@ -25,3 +25,9 @@ class SizedFifo(Generic[ListItem]):
 
     def newest(self):
         return self.__list[-1]
+
+
+def iter_groups(list: List[ListItem], group_size: int) -> Iterator[List[ListItem]]:
+    generator = (list[index:index+group_size] for index in range(0, len(list), group_size))
+    for group in generator:
+        yield group

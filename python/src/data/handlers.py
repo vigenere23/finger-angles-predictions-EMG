@@ -3,7 +3,9 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic, Iterator, Tuple
 from datetime import datetime
 from queue import Queue
+from dataclasses import replace
 from src.data.data import ProcessedData, SourceData
+from src.utils.lists import iter_groups
 from src.utils.loggers import Logger
 from src.utils.plot import PlottingStrategy
 from src.utils.types import InputType, OutputType
@@ -29,46 +31,24 @@ class Print(DataHandler[InputType, InputType]):
 class ProcessFromUART(DataHandler[SourceData[bytes], ProcessedData[bytes]]):
     def handle(self, input: Iterator[SourceData[bytes]]) -> Iterator[ProcessedData[bytes]]:
         for data in input:
-            if not (self.verify_start_bytes(data) and self.verify_end_bytes(data)):
-                raise RuntimeError("Corrupted data found... retrying")
+            channel = 0
+            timestamps = np.linspace(data.start.timestamp(), data.end.timestamp(), data.length // data.message_length)
+            data_groups = iter_groups(data.value, data.message_length)
 
-            timestamps = np.linspace(data.start.timestamp(), data.end.timestamp(), data.length)
-            data_extractor = (data.value[i::data.message_size] for i in range(1, data.message_size-1))
-            for i, x in enumerate(zip(*data_extractor)):
+            for timestamp, message in zip(timestamps, data_groups):
                 yield ProcessedData(
-                    value=x,
-                    time=datetime.fromtimestamp(timestamps[i])
+                    time=timestamp,
+                    channel=channel,
+                    value=message,
                 )
-
-    def verify_start_bytes(self, data: SourceData[bytes]):
-        return data.value[0::data.message_size] == data.start_byte * data.length
-
-    def verify_end_bytes(self, data: SourceData[bytes]):
-        return data.value[data.message_size-1::data.message_size] == data.stop_byte * data.length
+                channel = (channel + 1) % data.nb_channels
 
 
 class ToInt(DataHandler[ProcessedData[bytes], ProcessedData[int]]):
     def handle(self, input: Iterator[ProcessedData[bytes]]) -> Iterator[ProcessedData[int]]:
         for data in input:
-            yield ProcessedData(
-                value = int.from_bytes(bytearray(data.value), 'little', signed=True),
-                time=data.time
-            )
-
-
-class Accumulator(DataHandler[InputType, InputType]):
-    def __init__(self, size: int) -> None:
-        self.__size = size
-
-    def handle(self, input: Iterator[InputType]) -> Iterator[InputType]:
-        yield [next(input) for _ in range(self.__size)]
-
-
-class AddTimestamp(DataHandler[InputType, Tuple[float, InputType]]):
-    def handle(self, input: Iterator[InputType]) -> Iterator[Tuple[float, InputType]]:
-        for data in input:
-            now = datetime.now().timestamp()
-            yield (now, data)
+            new_value = int.from_bytes(bytearray(data.value), 'little', signed=True)
+            yield replace(data, value=new_value)
 
 
 class AddToQueue(DataHandler[InputType, InputType]):
@@ -102,17 +82,11 @@ class Time(DataHandler[InputType, InputType]):
             yield data
 
 
-class Plot(DataHandler[InputType, InputType]):
+class Plot(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
     def __init__(self, strategy: PlottingStrategy):
         self.__strategy = strategy
 
-    def handle(self, input: Iterator[InputType]) -> Iterator[OutputType]:
+    def handle(self, input: Iterator[ProcessedData[InputType]]) -> Iterator[ProcessedData[InputType]]:
         for data in input:
-            self.__strategy.update_plot(data[0], data[1])
+            self.__strategy.update_plot(data.time, data.value)
             yield data
-
-
-class ToTuple(DataHandler[ProcessedData[InputType], Tuple[Any]]):
-    def handle(self, input: Iterator[ProcessedData[InputType]]) -> Iterator[Tuple[Any]]:
-        for data in input:
-            yield data.to_tuple()

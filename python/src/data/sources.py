@@ -24,35 +24,41 @@ class TestSource(DataSource[bytes]):
 
 
 class SerialDataSource(DataSource[SourceData[bytes]]):
-    def __init__(self, port: str, baudrate: int, start_byte: bytes, stop_byte: bytes, batch_size: int, message_size: int):
+    def __init__(self, port: str, baudrate: int, sync_byte: bytes, check_byte: bytes):
         serial = Serial(port=port, baudrate=baudrate)
         serial.reset_input_buffer()
         serial.reset_output_buffer()
 
         self.__serial = serial
-        self.__start_byte = start_byte
-        self.__stop_byte = stop_byte
-        self.__batch_size = batch_size
-        self.__message_size = message_size
+        self.__sync_byte = sync_byte
+        self.__check_byte = check_byte
 
     def get(self) -> Iterator[bytes]:
+        self.__serial.inWaiting()
+        self.__serial.read_until(self.__sync_byte)
+
         start = datetime.now()
 
-        self.__serial.inWaiting()
-        self.__serial.read_until(self.__start_byte)
-        data = self.__serial.read(self.__message_size * self.__batch_size - 1)
-        data = self.__start_byte + data
+        config = self.__serial.read(3)
+        nb_channels = int(config[0])
+        message_length = int(config[1])
+        data_length = int(config[2])
+
+        data = self.__serial.read(data_length)
+        check_byte = self.__serial.read(1)
 
         end = datetime.now()
+
+        if check_byte != self.__check_byte:
+            raise RuntimeError('Did not received the expected UART packet')
 
         yield SourceData(
             value=data,
             start=start,
             end=end,
-            start_byte=self.__start_byte,
-            stop_byte=self.__stop_byte,
-            message_size=self.__message_size,
-            length=self.__batch_size,
+            nb_channels=nb_channels,
+            length=data_length,
+            message_length=message_length,
         )
 
 

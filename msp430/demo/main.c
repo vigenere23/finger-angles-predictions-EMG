@@ -11,26 +11,26 @@ int should_send_data = 0;
 void send_data() {
     should_send_data = 0;
 
-    // int data = get_adc_value();
-    int data = rand();
+    // TODO implement ADC for multiple channels
+    // int data1 = get_adc_value();
+    // int data2 = get_adc_value();
+    int data1 = rand();
+    int data2 = rand();
 
-    if (data >= 1500) { // ~1V
-        SET(P4OUT, BIT7);
-    } else {
-        UNSET(P4OUT, BIT7);
-    }
-
-    char lsb = data >> 8;
-    char msb = data & 0xFF;
-
-    char bytes[] = { lsb, msb };
-
-    send_uart_data(bytes, 2, 1, 254);
+    send_uart_data_int(data1);
+    send_uart_data_int(data2);
 }
 
 int main(void)
 {
     const long CLOCK_FREQUENCY = 8000000;
+    const UARTConfig UART_CONFIG = {
+        .sync_byte = '\n',
+        .channels = 2,
+        .data_length = 64,
+        .message_length = 2,
+        .check_byte = 0xFF
+    };
 
     WDTCTL = WDTPW | WDTHOLD;
 
@@ -39,7 +39,7 @@ int main(void)
     setup_adc();
     setup_clock(CLOCK_FREQUENCY);
     setup_timer(CLOCK_FREQUENCY, 500);
-    setup_uart();
+    setup_uart(&UART_CONFIG);
 
     __bis_SR_register(GIE);
 

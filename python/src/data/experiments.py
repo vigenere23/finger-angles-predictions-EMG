@@ -6,8 +6,8 @@ from typing import List
 from src.data.savers import CSVSaver
 from src.utils.loggers import ConsoleLogger
 from src.data.executors import Executor
-from src.data.sources import QueueSource, SerialDataSource
-from src.data.handlers import Print, ProcessFromUART, ToInt, AddTimestamp, AddToQueue, Time, Plot, ToTuple
+from src.data.sources import QueueSource, SerialDataSource, SerialDataSource
+from src.data.handlers import Print, ProcessFromUART, ProcessFromUART, ToInt, AddToQueue, Time, Plot
 from src.data.executors import HandlersExecutor, Retryer
 from src.utils.plot import RefreshingPlot, BatchPlotUpdate
 from src.utils.queues import BlockingMultiProcessFetch, NamedQueue, NonBlockingPut
@@ -28,10 +28,8 @@ class SerialExperiment(Experiment):
         source = SerialDataSource(
             port='/dev/ttyACM1',
             baudrate=115200,
-            start_byte=b'\x01',
-            stop_byte=b'\xfe',
-            message_size=4,
-            batch_size=10
+            sync_byte=b'\n',
+            check_byte=b'\xFF',
         )
         handlers = [
             AddToQueue(queue=self.__queue, strategy=NonBlockingPut()),
@@ -58,6 +56,7 @@ class ProcessingExperiment(Experiment):
             Time(logger=logger, timeout=5),
             AddToQueue(queue=self.__plot_queue, strategy=NonBlockingPut()),
             AddToQueue(queue=self.__csv_queue, strategy=NonBlockingPut()),
+            # Print(logger=logger)
         ]
 
         executor = HandlersExecutor(source=source, handlers=handlers)
@@ -74,7 +73,6 @@ class CSVExperiment(Experiment):
         logger = ConsoleLogger(prefix='[csv]')
         source = QueueSource(queue=self.__queue, strategy=BlockingMultiProcessFetch())
         handlers = [
-            ToTuple(),
             CSVSaver(file=path.join(Path.cwd(), 'data', str(datetime.now().timestamp()), 'emg.csv'), batch_size=100)
         ]
 
@@ -92,7 +90,6 @@ class PlottingExperiment(Experiment):
         logger = ConsoleLogger(prefix='[plot]')
         source = QueueSource(queue=self.__queue, strategy=BlockingMultiProcessFetch())
         handlers = [
-            ToTuple(),
             Plot(strategy=self.__plot_strategy),
         ]
 

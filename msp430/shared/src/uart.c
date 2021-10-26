@@ -3,7 +3,31 @@
 #include "utils.h"
 
 
-void setup_uart() {
+const UARTConfig* CONFIG;
+int data_counter = 0;
+
+
+void send_uart_byte(char byte) {
+    while(!(UCA1IFG & UCTXIFG)); // Wait for TX buffer to be ready for new data
+    UCA1TXBUF = byte;
+}
+
+
+void send_uart_prefix() {
+    send_uart_byte(CONFIG->sync_byte);
+    send_uart_byte(CONFIG->channels);
+    send_uart_byte(CONFIG->message_length);
+    send_uart_byte(CONFIG->data_length);
+}
+
+void send_uart_suffix() {
+    send_uart_byte(CONFIG->check_byte);
+}
+
+
+void setup_uart(const UARTConfig* config) {
+    CONFIG = config;
+
     SET(P4SEL, BIT4 + BIT5); // step 1
     SET(UCA1CTL1, UCSWRST); // step 2
     SET(UCA1CTL1, UCSSEL__SMCLK); // step 3
@@ -19,27 +43,21 @@ void setup_uart() {
     SET(UCA1IE, UCRXIE); // step 8
 }
 
-void send_uart_data(char *data, unsigned char length, char start_byte, char end_byte) {
-    if (start_byte != 0) {
-        send_uart_byte(start_byte);
-    }
-
-    while (length > 0) {
-        send_uart_byte(*data);
-        length--;
-        data++;
-    }
-
-    if (end_byte != 0) {
-        send_uart_byte(end_byte);
-    }
-
-    // TODO needed?
-    // while(UCA1STAT & UCBUSY); // wait for last byte to be sent
+void send_uart_data_int(int data) {
+    send_uart_data_byte(data >> 8);
+    send_uart_data_byte(data & 0xFF);
 }
 
-void send_uart_byte(char byte) {
-    while(!(UCA1IFG & UCTXIFG)); // Wait for TX buffer to be ready for new data
-    // __delay_cycles(1000);
-    UCA1TXBUF = byte; // put data in buffer
+void send_uart_data_byte(char data) {
+    if (data_counter == 0) {
+        send_uart_prefix();
+    }
+
+    send_uart_byte(data);
+
+    data_counter = (data_counter + 1) % CONFIG->data_length;
+
+    if (data_counter == 0) {
+        send_uart_suffix();
+    }
 }
