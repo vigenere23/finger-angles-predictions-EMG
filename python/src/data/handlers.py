@@ -90,3 +90,13 @@ class Plot(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
         for data in input:
             self.__strategy.update_plot(data.time, data.value)
             yield data
+
+
+class ChannelSelector(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
+    def __init__(self, channel: int) -> None:
+        self.__channel = channel
+
+    def handle(self, input: Iterator[ProcessedData[InputType]]) -> Iterator[ProcessedData[InputType]]:
+        for data in input:
+            if data.channel == self.__channel:
+                yield data

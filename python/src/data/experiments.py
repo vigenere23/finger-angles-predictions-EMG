@@ -7,7 +7,7 @@ from src.data.savers import CSVSaver
 from src.utils.loggers import ConsoleLogger
 from src.data.executors import Executor
 from src.data.sources import QueueSource, SerialDataSource, SerialDataSource
-from src.data.handlers import Print, ProcessFromUART, ProcessFromUART, ToInt, AddToQueue, Time, Plot
+from src.data.handlers import ChannelSelector, Print, ProcessFromUART, ProcessFromUART, ToInt, AddToQueue, Time, Plot
 from src.data.executors import HandlersExecutor, Retryer
 from src.utils.plot import RefreshingPlot, BatchPlotUpdate
 from src.utils.queues import BlockingMultiProcessFetch, NamedQueue, NonBlockingPut
@@ -45,20 +45,19 @@ class SerialExperiment(Experiment):
 
 
 class ProcessingExperiment(Experiment):
-    def __init__(self, source_queue: NamedQueue, csv_queue: NamedQueue, plot_queue: NamedQueue) -> None:
+    def __init__(self, source_queue: NamedQueue, dispatch_queues: List[NamedQueue]) -> None:
         self.__source_queue = source_queue
-        self.__plot_queue = plot_queue
-        self.__csv_queue = csv_queue
+        self.__dispatch_queues = dispatch_queues
 
     def create_executor(self) -> Executor:
         logger = ConsoleLogger(prefix="[processing]")
         source = QueueSource(queue=self.__source_queue, strategy=BlockingMultiProcessFetch())
+        dispatch_handlers = [AddToQueue(queue=queue, strategy=NonBlockingPut()) for queue in self.__dispatch_queues]
         handlers = [
             ProcessFromUART(),
             ToInt(),
             Time(logger=logger, timeout=5),
-            AddToQueue(queue=self.__plot_queue, strategy=NonBlockingPut()),
-            AddToQueue(queue=self.__csv_queue, strategy=NonBlockingPut()),
+            *dispatch_handlers,
             # Print(logger=logger)
         ]
 
@@ -85,14 +84,16 @@ class CSVExperiment(Experiment):
 
 
 class PlottingExperiment(Experiment):
-    def __init__(self, plot: RefreshingPlot, queue: NamedQueue) -> None:
+    def __init__(self, plot: RefreshingPlot, queue: NamedQueue, channel: int) -> None:
         self.__plot_strategy = BatchPlotUpdate(plot=plot, window_size=500, batch_size=500)
         self.__queue = queue
+        self.__channel = channel
 
     def create_executor(self) -> Executor:
         logger = ConsoleLogger(prefix='[plot]')
         source = QueueSource(queue=self.__queue, strategy=BlockingMultiProcessFetch())
         handlers = [
+            ChannelSelector(channel=self.__channel),
             Plot(strategy=self.__plot_strategy),
         ]
 
