@@ -83,18 +83,19 @@ class AddToQueue(DataHandler[InputType, InputType]):
 
 
 class Time(DataHandler[InputType, InputType]):
-    def __init__(self, logger: Logger) -> None:
+    def __init__(self, logger: Logger, timeout: int = 1) -> None:
         self.__start = datetime.now()
         self.__count = 0
         self.__logger = logger
+        self.__timeout = timeout
 
     def handle(self, input: Iterator[InputType]) -> Iterator[InputType]:
         for data in input:
             now = datetime.now()
             self.__count += 1
 
-            if (now - self.__start).seconds >= 1:
-                self.__logger.log(f'Rate : {self.__count} / s')
+            if (now - self.__start).seconds >= self.__timeout:
+                self.__logger.log(f'Rate : {round(self.__count/self.__timeout, 2)} / s')
                 self.__count = 0
                 self.__start = now
 

@@ -55,7 +55,7 @@ class ProcessingExperiment(Experiment):
         handlers = [
             ProcessFromUART(),
             ToInt(),
-            Time(logger=logger),
+            Time(logger=logger, timeout=5),
             AddToQueue(queue=self.__plot_queue, strategy=NonBlockingPut()),
             AddToQueue(queue=self.__csv_queue, strategy=NonBlockingPut()),
         ]

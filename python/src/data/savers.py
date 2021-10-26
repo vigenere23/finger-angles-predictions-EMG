@@ -19,7 +19,7 @@ class CSVSaver(DataHandler[InputType, InputType]):
             self.__buffer.append(data)
 
             if len(self.__buffer) == self.__batch_size:
-                with open(self.__file, 'w', newline='\n') as csvfile:
+                with open(self.__file, 'a+', newline='\n') as csvfile:
                     writer = csv.writer(csvfile, delimiter=';', quotechar='\\', quoting=csv.QUOTE_MINIMAL)
                     writer.writerows(self.__buffer)
                 self.__buffer = []
