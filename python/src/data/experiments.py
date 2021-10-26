@@ -61,7 +61,7 @@ class ProcessingExperiment(Experiment):
         ]
 
         executor = HandlersExecutor(source=source, handlers=handlers)
-        executor = Retryer(executor=executor, nb_retries=5)
+        executor = Retryer(executor=executor, nb_retries=10)
 
         return executor
 
@@ -75,7 +75,7 @@ class CSVExperiment(Experiment):
         source = QueueSource(queue=self.__queue, strategy=BlockingMultiProcessFetch())
         handlers = [
             ToTuple(),
-            CSVSaver(file=path.join(Path.cwd(), 'data', str(datetime.now().timestamp()), 'emg.csv'), batch_size=500)
+            CSVSaver(file=path.join(Path.cwd(), 'data', str(datetime.now().timestamp()), 'emg.csv'), batch_size=100)
         ]
 
         executor = HandlersExecutor(source=source, handlers=handlers)
@@ -85,7 +85,7 @@ class CSVExperiment(Experiment):
 
 class PlottingExperiment(Experiment):
     def __init__(self, plot: RefreshingPlot, queue: NamedQueue) -> None:
-        self.__plot_strategy = BatchPlotUpdate(plot=plot, window_size=20, batch_size=100)
+        self.__plot_strategy = BatchPlotUpdate(plot=plot, window_size=500, batch_size=500)
         self.__queue = queue
 
     def create_executor(self) -> Executor:
@@ -114,4 +114,4 @@ class QueuesAnalyzer(Executor):
             for queue in self.__queues:
                 size = queue.queue.qsize()
                 total = queue.maxsize
-                self.__logger.log(f'  {queue.name} : {size}/{total} ({round(size/total*100, 2)}%)')
+                self.__logger.log(f'{queue.name} : {size}/{total} ({round(size/total*100, 2)}%)')

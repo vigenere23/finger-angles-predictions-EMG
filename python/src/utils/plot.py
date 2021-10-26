@@ -40,7 +40,7 @@ class RefreshingPlot:
         ax.set_ylim([0, 1])
 
         fig.show()
-        plt.pause(0.2)
+        plt.pause(0.1)
 
     def set_data(self, X: Union[list, np.array], Y: Union[list, np.array]):
         if not self.__init:

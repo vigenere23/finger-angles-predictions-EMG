@@ -1,19 +1,19 @@
 #include <msp430.h>
-#include "timer.h"
+#include "clock.h"
 #include "utils.h"
 
 /* RECEIVER */
 
-/**
- * main.c
- */
 int main(void)
 {
-    WDTCTL = WDTPW | WDTHOLD;   // stop watchdog timer
+    const long CLOCK_FREQUENCY = 8000000;
+
+    WDTCTL = WDTPW | WDTHOLD;
 
     OUTPUT(P1DIR, BIT0);
 
-    setup_timer(243, 1600); // start timer at 8MHz clock and 200us interrupt
+    setup_clock(CLOCK_FREQUENCY);
+    setup_timer(CLOCK_FREQUENCY, 500);
 
     __bis_SR_register(LPM0_bits + GIE);
     __no_operation();
@@ -23,5 +23,5 @@ int main(void)
 
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void TIMER_A0_ISR (void) {
-    TOGGGLE(P1OUT, BIT0); // step 14
+    TOGGGLE(P1OUT, BIT0);
 }
