@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from os import path
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, time
 from typing import List
 from src.data.savers import CSVSaver
 from src.utils.loggers import ConsoleLogger
@@ -9,7 +9,7 @@ from src.data.executors import Executor
 from src.data.sources import QueueSource, SerialDataSource, SerialDataSource
 from src.data.handlers import ChannelSelector, Print, ProcessFromUART, ProcessFromUART, ToInt, AddToQueue, Time, Plot
 from src.data.executors import HandlersExecutor, Retryer
-from src.utils.plot import RefreshingPlot, BatchPlotUpdate
+from src.utils.plot import FixedTimeUpdate, RefreshingPlot, BatchPlotUpdate
 from src.utils.queues import BlockingMultiProcessFetch, NamedQueue, NonBlockingPut
 
 
@@ -86,6 +86,7 @@ class CSVExperiment(Experiment):
 class PlottingExperiment(Experiment):
     def __init__(self, plot: RefreshingPlot, queue: NamedQueue, channel: int) -> None:
         self.__plot_strategy = BatchPlotUpdate(plot=plot, window_size=500, batch_size=500)
+        # self.__plot_strategy = FixedTimeUpdate(plot=plot, timeout=2, batch_size=30)
         self.__queue = queue
         self.__channel = channel
 

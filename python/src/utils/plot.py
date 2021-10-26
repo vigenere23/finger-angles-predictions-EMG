@@ -91,14 +91,31 @@ class BatchPlotUpdate(PlottingStrategy):
 
 
 class FixedTimeUpdate(PlottingStrategy):
-    def __init__(self):
-        self.__start = datetime.now()
-        self.__last_limits = [[], []]
+    def __init__(self, plot: RefreshingPlot, timeout: int, batch_size: int = 5):
+        self.__plot = plot
+        self.__timeout = timeout
+        self.__batch_size = batch_size
+
         self.__X = []
         self.__Y = []
+        self.__count = 0
+        self.__start = datetime.now()
 
     def update_plot(self, x: Any, y: Any):
         now = datetime.now()
 
-        if (now - self.__start).seconds >= 1:
+        if (now - self.__start).seconds >= self.__timeout:
             self.__start = now
+
+            std_Y = np.std(self.__Y)
+            self.__plot.resize([self.__X[-1], self.__X[-1]+self.__timeout], [np.min(self.__Y) - std_Y, np.max(self.__Y) + std_Y])
+            self.__X = []
+            self.__Y = []
+
+        self.__X.append(x)
+        self.__Y.append(y)
+        self.__count += 1
+
+        if self.__count >= self.__batch_size:
+            self.__count = 0
+            self.__plot.set_data(self.__X, self.__Y)
