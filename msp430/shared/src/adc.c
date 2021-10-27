@@ -1,24 +1,26 @@
 #include <msp430.h>
 #include "utils.h"
+#include "adc.h"
 
 
 void setup_adc() {
-    INPUT(P6DIR, BIT0); // step 1
-    SET(P6SEL, BIT0); // step 2
-    UNSET(REFCTL0, REFMSTR); // step 3
-    OVERWRITE(ADC12CTL0, ADC12ON + ADC12REFON + /*ADC12SHT10 +*/ ADC12REF2_5V); // step 4
-    OVERWRITE(ADC12CTL1, ADC12SHP); // step 5
-    OVERWRITE(ADC12MCTL0, ADC12SREF0); // step 6
+    INPUT(P6DIR, BIT0);
+    SET(P6SEL, BIT0);
+    UNSET(REFCTL0, REFMSTR);
+    OVERWRITE(ADC12CTL0, ADC12ON + ADC12REFON + ADC12SHT0_4 + ADC12REF2_5V + ADC12MSC);
+    OVERWRITE(ADC12CTL1, ADC12SHP + ADC12CONSEQ_1);
+    // OVERWRITE(ADC12MCTL0, ADC12SREF0);
+    OVERWRITE(ADC12MCTL0, ADC12INCH_0);
+    OVERWRITE(ADC12MCTL1, ADC12INCH_1);
 
-    int i;
-    for (i=0; i < 0x30; i++);
+    __delay_cycles(100000);
 
     SET(ADC12CTL0, ADC12ENC); // step 7
 }
 
-int get_adc_value() {
+int get_adc_value(unsigned int channel) {
     SET(ADC12CTL0, ADC12SC); // start conversion sampling
     while (!(ADC12IFG & BIT0)); // wait for conversion to complete
 
-    return ADC12MEM0;
+    return channel;
 }

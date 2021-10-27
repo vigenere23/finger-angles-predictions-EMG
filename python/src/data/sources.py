@@ -41,9 +41,9 @@ class SerialDataSource(DataSource[SourceData[bytes]]):
 
     def get(self) -> Iterator[bytes]:
         self.__serial.inWaiting()
-        self.__serial.read_until(self.__sync_byte)
 
         start = datetime.now()
+        self.__serial.read_until(self.__sync_byte)
 
         config = self.__serial.read(3)
         nb_channels = int(config[0])

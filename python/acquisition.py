@@ -1,15 +1,15 @@
 from multiprocessing import Queue
 from src.data.processes import ExecutorProcess, SleepingExecutorProcess
-from src.utils.plot import BatchPlotUpdate, RefreshingPlot
+from src.utils.plot import RefreshingPlot
 from src.data.executors import ProcessesExecutor
 from src.data.experiments import PlottingExperiment, CSVExperiment, ProcessingExperiment, QueuesAnalyzer, SerialExperiment
 from src.utils.queues import NamedQueue
 
 
-DATA_QUEUE_SIZE = 1000
-PLOT1_QUEUE_SIZE = 5000
-PLOT2_QUEUE_SIZE = 5000
-CSV_QUEUE_SIZE = 1000
+DATA_QUEUE_SIZE = 10000
+PLOT1_QUEUE_SIZE = 50000
+PLOT2_QUEUE_SIZE = 50000
+CSV_QUEUE_SIZE = 10000
 
 plot1 = RefreshingPlot(
     title='UART data from channel 0',
@@ -32,7 +32,7 @@ plotting2_experiment = PlottingExperiment(channel=1, plot=plot2, queue=plot2_que
 serial_experiment = SerialExperiment(queue=data_queue)
 processing_experiment = ProcessingExperiment(
     source_queue=data_queue,
-    dispatch_queues=[csv_queue, plot1_queue],
+    dispatch_queues=[csv_queue, plot1_queue, plot2_queue],
 )
 queues_executor = QueuesAnalyzer(queues=[
     data_queue, csv_queue, plot1_queue, plot2_queue
@@ -49,7 +49,7 @@ executor = ProcessesExecutor(processes=[
     serial_process,
     processing_process,
     plotting1_process,
-    # plotting2_process,
+    plotting2_process,
     csv_process,
     queues_check_process
 ], wait_for_ending=True)

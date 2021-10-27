@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Iterator, Tuple
+from typing import Generic, Iterator
 from datetime import datetime
 from queue import Queue
 from dataclasses import replace
@@ -47,7 +47,7 @@ class ProcessFromUART(DataHandler[SourceData[bytes], ProcessedData[bytes]]):
 class ToInt(DataHandler[ProcessedData[bytes], ProcessedData[int]]):
     def handle(self, input: Iterator[ProcessedData[bytes]]) -> Iterator[ProcessedData[int]]:
         for data in input:
-            new_value = int.from_bytes(bytearray(data.value), 'little', signed=True)
+            new_value = int.from_bytes(bytearray(data.value), 'big', signed=True)
             yield replace(data, value=new_value)
 
 

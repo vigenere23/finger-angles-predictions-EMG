@@ -85,7 +85,7 @@ class CSVExperiment(Experiment):
 
 class PlottingExperiment(Experiment):
     def __init__(self, plot: RefreshingPlot, queue: NamedQueue, channel: int) -> None:
-        self.__plot_strategy = BatchPlotUpdate(plot=plot, window_size=500, batch_size=500)
+        self.__plot_strategy = BatchPlotUpdate(plot=plot, window_size=40, batch_size=500)
         # self.__plot_strategy = FixedTimeUpdate(plot=plot, timeout=2, batch_size=30)
         self.__queue = queue
         self.__channel = channel
