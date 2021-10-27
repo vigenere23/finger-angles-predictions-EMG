@@ -1,6 +1,5 @@
 from datetime import datetime
 from serial import Serial
-import random
 from abc import ABC, abstractmethod
 from typing import Iterator, Generic
 from serial.serialutil import PARITY_NONE, PARITY_ODD
@@ -14,15 +13,6 @@ class DataSource(ABC, Generic[OutputType]):
     @abstractmethod
     def get(self) -> Iterator[OutputType]:
         raise NotImplementedError()
-
-
-class TestSource(DataSource[bytes]):
-    def get(self) -> Iterator[bytes]:
-        while True:
-            data = b''
-            for _ in range(10):
-                data += b'\x00' + (random.randint(-15000, 15000)).to_bytes(2, 'little', signed=True) + b'\xFE'
-            yield data
 
 
 class SerialDataSource(DataSource[SourceData[bytes]]):

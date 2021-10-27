@@ -29,7 +29,7 @@ plot2_queue = NamedQueue(name='plot2', maxsize=PLOT2_QUEUE_SIZE, queue=Queue(max
 csv_experiment = CSVExperiment(queue=csv_queue)
 plotting1_experiment = PlottingExperiment(channel=0, plot=plot1, queue=plot1_queue)
 plotting2_experiment = PlottingExperiment(channel=1, plot=plot2, queue=plot2_queue)
-serial_experiment = SerialExperiment(queue=data_queue)
+serial_experiment = SerialExperiment(queue=data_queue, serial_port='/dev/ttyACM1')
 processing_experiment = ProcessingExperiment(
     source_queue=data_queue,
     dispatch_queues=[csv_queue, plot1_queue, plot2_queue],

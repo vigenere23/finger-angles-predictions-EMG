@@ -20,13 +20,14 @@ class Experiment(ABC):
 
 
 class SerialExperiment(Experiment):
-    def __init__(self, queue: NamedQueue) -> None:
+    def __init__(self, queue: NamedQueue, serial_port: str) -> None:
         self.__queue = queue
+        self.__port = serial_port
 
     def create_executor(self) -> Executor:
         logger = ConsoleLogger(prefix="[serial]")
         source = SerialDataSource(
-            port='/dev/ttyACM1',
+            port=self.__port,
             baudrate=115200,
             sync_byte=b'\n',
             check_byte=b'\xFF',
