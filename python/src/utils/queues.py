@@ -1,16 +1,26 @@
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Any, Union, Generic
 import multiprocessing
 import queue
+from src.utils.loggers import Logger
 from src.utils.types import OutputType
 
 
+@dataclass
 class NamedQueue:
-    def __init__(self, name: str, maxsize: int, queue: Union[multiprocessing.Queue, queue.Queue]):
-        self.queue = queue
-        self.name = name
-        self.maxsize = maxsize
+    name: str
+    queue: Union[multiprocessing.Queue, queue.Queue]
+    maxsize: int = None
 
+    def print_usage(self, logger: Logger):
+        size = self.queue.qsize()
+
+        if self.maxsize:
+            total = self.maxsize
+            logger.log(f'{self.name} : {size}/{total} ({round(size/total*100, 2)}%)')
+        else:
+            logger.log(f'{self.name} : {size}/inf')
 
 
 class QueuePuttingStrategy(ABC):
@@ -39,7 +49,7 @@ class QueueFetchingStrategy(ABC, Generic[OutputType]):
         raise NotImplementedError()
 
 
-class BlockingMultiProcessFetch(QueueFetchingStrategy[OutputType]):
+class BlockingFetch(QueueFetchingStrategy[OutputType]):
     def __init__(self, timeout: int = None):
         self.__timeout = timeout
 

@@ -12,6 +12,12 @@ class Executor(ABC):
         raise NotImplementedError()
 
 
+class ExecutorFactory(ABC):
+    @abstractmethod
+    def create(self) -> Executor:
+        raise NotImplementedError()
+
+
 class HandlersExecutor(Executor):
     def __init__(self, source: DataSource, handlers: List[DataHandler]) -> None:
         self.__source = source
@@ -45,6 +51,17 @@ class Retryer(Executor):
 
         if failed:
             raise RuntimeError('Maximum number of retries exceeded')
+
+
+class PrinterExecutor(Executor):
+    def __init__(self, name: str, executor: Executor) -> None:
+        self.__name = name
+        self.__executor = executor
+
+    def execute(self):
+        print(f'{self.__name} started')
+        self.__executor.execute()
+        print(f'{self.__name} ended')
 
 
 class ThreadsExecutor(Executor):
