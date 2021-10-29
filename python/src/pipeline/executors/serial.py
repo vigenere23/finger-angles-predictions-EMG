@@ -1,6 +1,6 @@
 from src.pipeline.executors.base import Executor, ExecutorFactory, HandlersExecutor, Retryer
 from src.pipeline.handlers import DataHandler
-from src.pipeline.sources import SerialDataSource
+from src.pipeline.sources import FakeSerialSource, SerialDataSource
 from src.utils.loggers import ConsoleLogger
 
 
@@ -9,7 +9,7 @@ class SerialExecutorFactory(ExecutorFactory):
         logger = ConsoleLogger(prefix="[serial]")
 
         if port == 'fake':
-            pass # TODO add fake serial source
+            self.__source = FakeSerialSource()
         else:
             self.__source = SerialDataSource(
                 port=port,

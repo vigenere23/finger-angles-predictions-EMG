@@ -1,5 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from serial import Serial
+from random import randint
+from time import sleep
 from abc import ABC, abstractmethod
 from typing import Iterator, Generic
 from serial.serialutil import PARITY_NONE, PARITY_ODD
@@ -13,6 +15,35 @@ class DataSource(ABC, Generic[OutputType]):
     @abstractmethod
     def get(self) -> Iterator[OutputType]:
         raise NotImplementedError()
+
+
+class FakeSerialSource(DataSource[SourceData[bytes]]):
+    def __init__(self):
+        self.__data_length = 32
+        self.__message_length = 2
+        self.__nb_channels = 2
+        self.__dt = timedelta(milliseconds=10)
+
+        self.__start = datetime.now()
+
+    def __generate(self) -> bytes:
+        return randint(-4000, 4000).to_bytes(2, 'big', signed=True)
+
+    def get(self) -> Iterator[SourceData[bytes]]:
+        end = self.__start + self.__dt
+
+        yield SourceData(
+            value=b''.join((self.__generate() for _ in range(self.__data_length))),
+            start=self.__start,
+            end=end,
+            length=self.__data_length,
+            message_length=self.__message_length,
+            nb_channels=self.__nb_channels
+        )
+
+        self.__start = end
+
+        sleep(self.__dt.total_seconds())
 
 
 class SerialDataSource(DataSource[SourceData[bytes]]):
@@ -29,7 +60,7 @@ class SerialDataSource(DataSource[SourceData[bytes]]):
         self.__logger = logger
         self.__verbose = verbose
 
-    def get(self) -> Iterator[bytes]:
+    def get(self) -> Iterator[SourceData[bytes]]:
         self.__serial.inWaiting()
 
         start = datetime.now()

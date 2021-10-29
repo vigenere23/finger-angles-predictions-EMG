@@ -1,3 +1,4 @@
+import traceback
 from abc import ABC, abstractmethod
 from multiprocessing.context import Process
 from threading import Thread
@@ -47,7 +48,7 @@ class Retryer(Executor):
                 break
             except Exception as e:
                 print(f'### Exception ({e.__class__}) : {e}')
-                print(e.with_traceback(None))
+                print(traceback.format_exc())
 
         if failed:
             raise RuntimeError('Maximum number of retries exceeded')
