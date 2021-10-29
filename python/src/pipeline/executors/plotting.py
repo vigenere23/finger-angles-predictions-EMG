@@ -1,6 +1,6 @@
-from src.data.executors.base import Executor, ExecutorFactory, HandlersExecutor
-from src.data.handlers import ChannelSelector, Plot
-from src.data.sources import DataSource
+from src.pipeline.executors.base import Executor, ExecutorFactory, HandlersExecutor
+from src.pipeline.handlers import ChannelSelector, Plot
+from src.pipeline.sources import DataSource
 from src.utils.plot import BatchPlotUpdate, RefreshingPlot
 
 

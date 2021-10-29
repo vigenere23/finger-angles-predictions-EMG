@@ -3,7 +3,7 @@ from serial import Serial
 from abc import ABC, abstractmethod
 from typing import Iterator, Generic
 from serial.serialutil import PARITY_NONE, PARITY_ODD
-from src.data.data import SourceData
+from src.pipeline.data import SourceData
 from src.utils.loggers import Logger
 from src.utils.queues import NamedQueue, QueueFetchingStrategy
 from src.utils.types import OutputType

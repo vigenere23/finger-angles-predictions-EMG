@@ -1,9 +1,9 @@
 from os import path, makedirs
 import csv
 from typing import Iterator
-from src.data.data import ProcessedData
+from src.pipeline.data import ProcessedData
 from src.utils.types import InputType
-from src.data.handlers import DataHandler
+from src.pipeline.handlers import DataHandler
 
 
 class CSVSaver(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):

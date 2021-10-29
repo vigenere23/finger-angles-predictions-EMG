@@ -3,15 +3,15 @@ from pathlib import Path
 from datetime import datetime
 from multiprocessing import Queue
 from typing import List
-from src.data.executors.base import Executor, ExecutorFactory, ProcessesExecutor
-from src.data.executors.csv import CSVExecutorFactory
-from src.data.executors.plotting import PlottingExecutorFactory
-from src.data.executors.processing import ProcessingExecutorFactory
-from src.data.executors.queues import QueuesExecutorFactory
-from src.data.executors.serial import SerialExecutorFactory
-from src.data.handlers import AddToQueue
-from src.data.processes import ExecutorProcess, SleepingExecutorProcess
-from src.data.sources import QueueSource
+from src.pipeline.executors.base import Executor, ExecutorFactory, ProcessesExecutor
+from src.pipeline.executors.csv import CSVExecutorFactory
+from src.pipeline.executors.plotting import PlottingExecutorFactory
+from src.pipeline.executors.processing import ProcessingExecutorFactory
+from src.pipeline.executors.queues import QueuesExecutorFactory
+from src.pipeline.executors.serial import SerialExecutorFactory
+from src.pipeline.handlers import AddToQueue
+from src.pipeline.processes import ExecutorProcess, SleepingExecutorProcess
+from src.pipeline.sources import QueueSource
 from src.utils.plot import RefreshingPlot
 from src.utils.queues import BlockingFetch, NamedQueue, NonBlockingPut
 

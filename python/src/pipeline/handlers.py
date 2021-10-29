@@ -4,7 +4,7 @@ from typing import Generic, Iterator
 from datetime import datetime
 from queue import Queue
 from dataclasses import replace
-from src.data.data import ProcessedData, SourceData
+from src.pipeline.data import ProcessedData, SourceData
 from src.utils.lists import iter_groups
 from src.utils.loggers import Logger
 from src.utils.plot import PlottingStrategy

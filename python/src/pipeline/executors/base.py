@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from multiprocessing.context import Process
 from threading import Thread
 from typing import List
-from src.data.sources import DataSource
-from src.data.handlers import DataHandler
+from src.pipeline.sources import DataSource
+from src.pipeline.handlers import DataHandler
 
 
 class Executor(ABC):

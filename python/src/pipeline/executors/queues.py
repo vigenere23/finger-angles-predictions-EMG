@@ -1,6 +1,6 @@
 from typing import List
 from datetime import datetime
-from src.data.executors.base import Executor, ExecutorFactory
+from src.pipeline.executors.base import Executor, ExecutorFactory
 from src.utils.loggers import ConsoleLogger
 from src.utils.queues import NamedQueue
 

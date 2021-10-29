@@ -1,6 +1,6 @@
 from threading import Thread
 from time import sleep
-from src.data.executors import Executor
+from src.pipeline.executors import Executor
 
 
 class ExecutorThread(Thread):

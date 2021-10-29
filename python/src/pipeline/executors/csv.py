@@ -1,6 +1,6 @@
-from src.data.executors.base import Executor, ExecutorFactory, HandlersExecutor
-from src.data.savers import CSVSaver
-from src.data.sources import DataSource
+from src.pipeline.executors.base import Executor, ExecutorFactory, HandlersExecutor
+from src.pipeline.savers import CSVSaver
+from src.pipeline.sources import DataSource
 
 
 class CSVExecutorFactory(ExecutorFactory):

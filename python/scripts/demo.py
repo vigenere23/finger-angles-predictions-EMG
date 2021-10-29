@@ -1,5 +1,5 @@
 from src.cli.args import DemoArgs
-from src.data.executors.acquisition import AcquisitionExperiment
+from src.pipeline.executors.acquisition import AcquisitionExperiment
 
 
 def run(args: DemoArgs):

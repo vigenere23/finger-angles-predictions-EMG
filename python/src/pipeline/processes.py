@@ -2,7 +2,7 @@ from multiprocessing import Process
 from threading import Thread
 from time import sleep
 import time
-from src.data.executors.base import Executor
+from src.pipeline.executors.base import Executor
 
 
 class ExecutorThread(Thread):

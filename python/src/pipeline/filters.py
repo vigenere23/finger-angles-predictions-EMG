@@ -5,8 +5,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Generic
 import struct
 from numpy import cos
-from src.data.utils import SizedFifo
-from src.data.types import OutputType
+from src.pipeline.utils import SizedFifo
+from src.pipeline.types import OutputType
 
 
 class Filter(ABC, Generic[OutputType]):

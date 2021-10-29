@@ -1,6 +1,6 @@
-from src.data.executors.base import Executor, ExecutorFactory, HandlersExecutor, Retryer
-from src.data.handlers import DataHandler
-from src.data.sources import SerialDataSource
+from src.pipeline.executors.base import Executor, ExecutorFactory, HandlersExecutor, Retryer
+from src.pipeline.handlers import DataHandler
+from src.pipeline.sources import SerialDataSource
 from src.utils.loggers import ConsoleLogger
 
 

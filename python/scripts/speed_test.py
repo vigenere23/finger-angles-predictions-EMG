@@ -1,5 +1,5 @@
 from src.cli.args import SpeedTestArgs
-from src.data.executors.speed_test import SpeedTest
+from src.pipeline.executors.speed_test import SpeedTest
 
 
 def run(args: SpeedTestArgs):
