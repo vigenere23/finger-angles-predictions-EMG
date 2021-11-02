@@ -15,14 +15,21 @@ class CSVSaver(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
         self.__batch_size = batch_size
         self.__buffer = []
 
+        self.__write_rows([['channel', 'timestamp', 'value']])
+
+
     def handle(self, input: Iterator[ProcessedData[InputType]]) -> Iterator[ProcessedData[InputType]]:
         for data in input:
             self.__buffer.append((data.channel, data.time, data.value))
 
             if len(self.__buffer) == self.__batch_size:
-                with open(self.__file, 'a+', newline='\n') as csvfile:
-                    writer = csv.writer(csvfile, delimiter=';', quotechar='\\', quoting=csv.QUOTE_MINIMAL)
-                    writer.writerows(self.__buffer)
+                self.__write_rows(self.__buffer)
                 self.__buffer = []
 
             yield data
+
+
+    def __write_rows(self, rows):
+        with open(self.__file, 'a+', newline='\n') as csvfile:
+            writer = csv.writer(csvfile, delimiter=';', quotechar='\\', quoting=csv.QUOTE_MINIMAL)
+            writer.writerows(rows)
