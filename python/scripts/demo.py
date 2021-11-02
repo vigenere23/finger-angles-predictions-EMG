@@ -10,8 +10,7 @@ def run(args: DemoArgs):
     if args.csv:
         experiment.add_csv_saving()
 
-    if args.plot:
-        for channel in args.plot_channels:
-            experiment.add_plotting(channel)
+    for channel in args.plot:
+        experiment.add_plotting(channel)
     
     experiment.execute()

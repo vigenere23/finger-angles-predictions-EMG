@@ -11,10 +11,10 @@ int should_send_data = 0;
 void send_data() {
     should_send_data = 0;
 
-    // int data1 = get_adc_value(ADC_CHANNEL_0);
-    // int data2 = get_adc_value(ADC_CHANNEL_1);
-    int data1 = rand();
-    int data2 = rand();
+    int data1 = get_adc_value(ADC_CHANNEL_0);
+    int data2 = get_adc_value(ADC_CHANNEL_1);
+    // int data1 = rand();
+    // int data2 = rand();
 
     send_uart_data_int(data1);
     send_uart_data_int(data2);
