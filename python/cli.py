@@ -16,3 +16,5 @@ if args.command == 'demo':
     demo.run(args)
 elif args.command == 'speed_test':
     speed_test.run(args)
+else:
+    args.print_help()

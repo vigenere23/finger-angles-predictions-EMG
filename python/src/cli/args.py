@@ -3,7 +3,7 @@ from tap import Tap
 
 
 class DemoArgs(Tap):
-    serial_port: str # write 'fake' for a fake one
+    serial_port: str # use 'rand' for random generation, or 'freq' for specific frequency generation
     csv: bool = False # save all data to a CSV
     plot: List[int] = [] # channels to use for plotting
 
@@ -12,4 +12,4 @@ class DemoArgs(Tap):
 
 
 class SpeedTestArgs(Tap):
-    serial_port: str # write 'fake' for a fake one
+    serial_port: str # use 'rand' for random generation, or 'freq' for specific frequency generation
