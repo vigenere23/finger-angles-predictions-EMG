@@ -1,4 +1,5 @@
 from src.pipeline.executors.base import Executor, ExecutorFactory, HandlersExecutor, Retryer
+from src.pipeline.filters import NotchFrequency
 from src.pipeline.handlers import DataHandler, ProcessFromUART, Time, ToInt
 from src.pipeline.sources import DataSource
 from src.utils.loggers import ConsoleLogger
@@ -17,6 +18,7 @@ class ProcessingExecutorFactory(ExecutorFactory):
         handlers = [
             ProcessFromUART(),
             ToInt(),
+            NotchFrequency(R=1.4, frequency=60, sampling_frequency=2000), # TODO R = 2??
             Time(logger=logger, timeout=5),
             *self.__output_handlers,
         ]
