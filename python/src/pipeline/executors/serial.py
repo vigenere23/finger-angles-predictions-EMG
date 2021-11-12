@@ -1,3 +1,4 @@
+from typing import List
 from src.pipeline.executors.base import Executor, ExecutorFactory, HandlersExecutor, Retryer
 from src.pipeline.handlers import DataHandler
 from src.pipeline.sources import RandomFakeSerialSource, FrequencyFakeSerialSource, SerialDataSource
@@ -5,7 +6,7 @@ from src.utils.loggers import ConsoleLogger
 
 
 class SerialExecutorFactory(ExecutorFactory):
-    def __init__(self, port: str) -> None:
+    def __init__(self, port: str, output_handlers: List[DataHandler]) -> None:
         logger = ConsoleLogger(prefix="[serial]")
 
         if port == 'fake':
@@ -23,13 +24,8 @@ class SerialExecutorFactory(ExecutorFactory):
                 # verbose=True
             )
 
-        self.__output_handlers = []
+        self.__output_handlers = output_handlers
         
-
-    def add_output(self, handler: DataHandler):
-        self.__output_handlers.append(handler)
-
-
     def create(self) -> Executor:
         handlers = [
             *self.__output_handlers,

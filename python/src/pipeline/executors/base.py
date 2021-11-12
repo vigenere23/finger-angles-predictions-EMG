@@ -80,14 +80,10 @@ class ThreadsExecutor(Executor):
 
 
 class ProcessesExecutor(Executor):
-    def __init__(self, processes: List[Process], wait_for_ending: bool) -> None:
+    def __init__(self, processes: List[Process]) -> None:
         self.__processes = processes
-        self.__wait_for_ending = wait_for_ending
 
     def execute(self):
         for process in self.__processes:
             process.start()
-
-        if self.__wait_for_ending:
-            for process in self.__processes:
-                process.join()
+            print(f'Started > {process.name}')

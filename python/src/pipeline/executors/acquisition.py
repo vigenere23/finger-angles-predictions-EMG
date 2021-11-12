@@ -1,8 +1,9 @@
+from dataclasses import dataclass
 import os
 from pathlib import Path
 from datetime import datetime
 from multiprocessing import Queue
-from typing import Dict
+from typing import Dict, List
 from src.pipeline.executors.base import Executor, ExecutorFactory, ProcessesExecutor
 from src.pipeline.executors.csv import CSVExecutorFactory
 from src.pipeline.executors.plotting import PlottingExecutorFactory
@@ -16,78 +17,122 @@ from src.utils.plot import RefreshingPlot
 from src.utils.queues import BlockingFetch, NamedQueue, NonBlockingPut
 
 
-class AcquisitionExperiment(Executor):
-    def __init__(self, serial_port: str):
-        processing_queue = NamedQueue(name='processing', queue=Queue())
+@dataclass
+class ChannelConfig:
+    channel: int
+    plot: bool = False
+    csv: bool = False
 
-        self.__serial = SerialExecutorFactory(port=serial_port)
-        self.__serial.add_output(
-            AddToQueue(queue=processing_queue, strategy=NonBlockingPut())
-        )
-        
-        self.__processing = ProcessingExecutorFactory(
+
+class AcquisitionExperiment(Executor):
+    def __init__(self, serial_port: str, configs: List[ChannelConfig]):
+        executor_factories: Dict[str, ExecutorFactory] = {}
+        queues = []
+        processing_outputs = []
+
+        base_csv_path = os.path.join(Path.cwd(), 'data', f'acq-{datetime.now().timestamp()}')
+
+        for config in configs:
+            handlers = [ChannelSelector(channel=config.channel)]
+
+            if config.plot:
+                queue = NamedQueue(name=f'plot-{config.channel}', queue=Queue())
+                handlers.append(AddToQueue(queue=queue, strategy=NonBlockingPut()))
+
+                plot = RefreshingPlot(
+                    title=f'UART data from channel {config.channel}',
+                    x_label='time',
+                    y_label='value',
+                )
+                plotting = PlottingExecutorFactory(
+                    plot=plot,
+                    source=QueueSource(queue=queue, strategy=BlockingFetch())
+                )
+
+                executor_factories[f'Plot-{config.channel}'] = plotting
+                queues.append(queue)
+            
+            if config.csv:
+                queue = NamedQueue(name=f'csv-{config.channel}', queue=Queue())
+                handlers.append(AddToQueue(queue=queue, strategy=NonBlockingPut()))
+                
+                path = os.path.join(base_csv_path, f'emg-{config.channel}.csv')
+                csv = CSVExecutorFactory(
+                    source=QueueSource(queue=queue, strategy=BlockingFetch()),
+                    path=path
+                )
+
+                executor_factories[f'CSV-{config.channel}'] = csv
+                queues.append(queue)
+
+            processing_outputs.append(
+                BranchedHandlers(handlers=handlers)
+            )
+
+        processing_queue = NamedQueue(name='processing', queue=Queue())
+        processing = ProcessingExecutorFactory(
             source=QueueSource(queue=processing_queue, strategy=BlockingFetch())
         )
+        for output_handler in processing_outputs:
+            processing.add_output(output_handler)
 
-        self.__queues = [processing_queue]
-        self.__future_processes: Dict[str, ExecutorFactory] = {}
+        queues.append(processing_queue)
+        executor_factories['Processing'] = processing
 
-    def add_csv_saving(self):
-        path = os.path.join(Path.cwd(), 'data', str(datetime.now().timestamp()), 'emg.csv')
-        queue = NamedQueue(name=f'csv', queue=Queue())
-        self.__processing.add_output(
-            AddToQueue(queue=queue, strategy=NonBlockingPut())
-        )
+        serial = SerialExecutorFactory(port=serial_port, output_handlers=[
+            AddToQueue(queue=processing_queue, strategy=NonBlockingPut())
+        ])
+        executor_factories['Serial'] = serial
 
-        csv = CSVExecutorFactory(
-            source=QueueSource(queue=queue, strategy=BlockingFetch()),
-            path=path
-        )
-
-        self.__future_processes['CSV'] = csv
-        self.__queues.append(queue)
-
-    def add_plotting(self, channel: int):
-        queue = NamedQueue(name=f'plot-{channel}', queue=Queue())
-        self.__processing.add_output(
-            BranchedHandlers(handlers=[
-                ChannelSelector(channel=channel),
-                AddToQueue(queue=queue, strategy=NonBlockingPut())
-            ])
-        )
-
-        plot = RefreshingPlot(
-            title=f'UART data from channel {channel}',
-            x_label='time',
-            y_label='value',
-        )
-        plotting = PlottingExecutorFactory(
-            plot=plot,
-            source=QueueSource(queue=queue, strategy=BlockingFetch())
-        )
-
-        self.__future_processes[f'Plot-{channel}'] = plotting
-        self.__queues.append(queue)
-
-    def execute(self):
-        processes = [
-            ExecutorProcess(name='Serial', executor=self.__serial.create()),
-            ExecutorProcess(name='Processing', executor=self.__processing.create())
-        ]
-
-        for process_name, executor_factory in self.__future_processes.items():
+        processes = []
+        for process_name, executor_factory in executor_factories.items():
             processes.append(ExecutorProcess(
                 name=process_name,
                 executor=executor_factory.create()
             ))
-        
         processes.append(
             SleepingExecutorProcess(
                 name='Queues',
-                executor=QueuesExecutorFactory(queues=self.__queues).create(),
+                executor=QueuesExecutorFactory(queues=queues).create(),
                 sleep_time=5
             )
         )
 
-        executor = ProcessesExecutor(processes=processes, wait_for_ending=True)
-        executor.execute()
+        self.__executor = ProcessesExecutor(processes=processes)
+    
+    def execute(self):
+        self.__executor.execute()
+
+
+class AcquisitionExperimentBuilder:
+    def __init__(self):
+        self.__serial_port = 'fake'
+        self.__channel_configs: Dict[int, ChannelConfig] = {}
+
+    def __get_or_create_config(self, channel: int) -> ChannelConfig:
+        if self.__channel_configs.get(channel) is None:
+            self.__channel_configs[channel] = ChannelConfig(channel=channel)
+
+        return self.__channel_configs[channel]
+
+    def __save_config(self, config: ChannelConfig):
+        self.__channel_configs[config.channel] = config
+
+    def set_serial_port(self, serial_port: str):
+        self.__serial_port = serial_port
+
+    def add_plotting_for(self, channel: int):
+        config = self.__get_or_create_config(channel)
+        config.plot = True
+        self.__save_config(config)
+
+    def add_csv_for(self, channel: int):
+        config = self.__get_or_create_config(channel)
+        config.csv = True
+        self.__save_config(config)
+
+    def build(self) -> AcquisitionExperiment:
+        return AcquisitionExperiment(
+            serial_port=self.__serial_port,
+            configs=self.__channel_configs.values()
+        )
