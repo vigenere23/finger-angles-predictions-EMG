@@ -21,9 +21,3 @@ or
 ```shell
 python cli.py --help
 ```
-
-or, on Linux:
-
-```shell
-./cli --help
-```
