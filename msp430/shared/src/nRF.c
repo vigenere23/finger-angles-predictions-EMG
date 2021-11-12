@@ -59,7 +59,7 @@ void nRF_reg_read(char addr, char *data, unsigned data_length)
     nRF_DESELECT;    
 }
 //---------------------------------------------------------------------
-void nRF_upload_TX_payload(char *data)
+void nRF_upload_TX_payload(const char *data)
 {
     char i;
 
@@ -67,7 +67,7 @@ void nRF_upload_TX_payload(char *data)
 
     nRF_SELECT;
 
-    UCA0TXBUF =  0xA0;
+    UCA0TXBUF = 0xA0;
     for(i = 0; i < nRF_packet_len; i++)
     {
         while(UCA0STAT & UCBUSY);

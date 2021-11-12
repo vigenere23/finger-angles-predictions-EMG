@@ -5,11 +5,13 @@
 #include "adc.h"
 #include "uart.h"
 
+/* DEMO */
 
-int should_send_data = 0;
 
-void send_data() {
-    should_send_data = 0;
+int should_receive_data = 0;
+
+void receive_data() {
+    should_receive_data = 0;
 
     int data1 = get_adc_value(ADC_CHANNEL_0);
     int data2 = get_adc_value(ADC_CHANNEL_1);
@@ -41,13 +43,13 @@ int main(void)
     __bis_SR_register(GIE);
 
     while (1) {
-        if (should_send_data) {
-            send_data();
+        if (should_receive_data) {
+            receive_data();
         }
     }
 }
 
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void TIMER_A0_ISR (void) {
-    should_send_data = 1;
+    should_receive_data = 1;
 }

@@ -1,8 +1,24 @@
 #include <msp430.h>
+#include <stdlib.h>
+#include "radio.h"
 #include "clock.h"
 #include "utils.h"
+#include "adc.h"
 
 /* SENDER */
+
+
+int should_send_data = 0;
+
+void send_data() {
+    should_send_data = 0;
+
+    int data1 = get_adc_value(ADC_CHANNEL_0);
+    int data2 = get_adc_value(ADC_CHANNEL_1);
+
+    send_radio_int_data(data1);
+    send_radio_int_data(data2);
+}
 
 int main(void)
 {
@@ -10,18 +26,23 @@ int main(void)
 
     WDTCTL = WDTPW | WDTHOLD;
 
-    OUTPUT(P1DIR, BIT0);
+    OUTPUT(P4DIR, BIT7);
 
+    setup_adc();
     setup_clock(CLOCK_FREQUENCY);
-    setup_timer(CLOCK_FREQUENCY, 500);
+    setup_timer(CLOCK_FREQUENCY, 2000);
 
-    __bis_SR_register(LPM0_bits + GIE);
-    __no_operation();
+    __bis_SR_register(GIE);
 
-    return 0;
+    while (1) {
+        if (should_send_data) {
+            send_data();
+        }
+    }
 }
 
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void TIMER_A0_ISR (void) {
-    TOGGGLE(P1OUT, BIT0);
+    should_send_data = 1;
+    clear_IFG_interrupt();
 }
