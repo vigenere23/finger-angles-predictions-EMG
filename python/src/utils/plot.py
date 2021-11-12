@@ -90,6 +90,33 @@ class BatchPlotUpdate(PlottingStrategy):
             self.__plot.set_data(X, Y)
 
 
+class TimedPlotUpdate(PlottingStrategy):
+    def __init__(self, plot: RefreshingPlot, window_size: int, update_time: float = 1):
+        self.__x_history = SizedFifo(size=window_size)
+        self.__y_history = SizedFifo(size=window_size)
+        self.__plot = plot
+        self.__update_time = update_time
+
+        self.__start = datetime.now()
+
+    def update_plot(self, x: Any, y: Any):
+        self.__x_history.append(x)
+        self.__y_history.append(y)
+
+        deltatime = datetime.now() - self.__start
+        
+        if deltatime.total_seconds() >= self.__update_time:
+            self.__start = datetime.now()
+
+            X = self.__x_history.to_list()
+            Y = self.__y_history.to_list()
+
+            std_Y = np.std(Y)
+
+            self.__plot.resize([np.min(X), np.max(X)], [np.min(Y) - std_Y, np.max(Y) + std_Y])
+            self.__plot.set_data(X, Y)
+
+
 class FixedTimeUpdate(PlottingStrategy):
     def __init__(self, plot: RefreshingPlot, timeout: int, batch_size: int = 5):
         self.__plot = plot

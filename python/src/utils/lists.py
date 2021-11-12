@@ -11,7 +11,7 @@ class SizedFifo(Generic[ListItem]):
 
     def append(self, item: ListItem):
         self.__list.append(item)
-        self.__list.pop(0)
+        del self.__list[0]
 
     def add_all(self, items: List[ListItem]):
         self.__list.extend(items)
