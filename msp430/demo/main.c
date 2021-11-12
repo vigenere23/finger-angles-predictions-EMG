@@ -35,7 +35,7 @@ int main(void)
 
     setup_adc();
     setup_clock(CLOCK_FREQUENCY);
-    setup_timer(CLOCK_FREQUENCY, 1000);
+    setup_timer(CLOCK_FREQUENCY, 2000);
     setup_uart(&UART_CONFIG);
 
     __bis_SR_register(GIE);
