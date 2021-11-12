@@ -1,15 +1,14 @@
 from src.pipeline.executors.base import Executor, ExecutorFactory, HandlersExecutor
-from src.pipeline.handlers import ChannelSelector, Plot
+from src.pipeline.handlers import Plot
 from src.pipeline.sources import DataSource
-from src.utils.plot import BatchPlotUpdate, RefreshingPlot, TimedPlotUpdate
+from src.utils.plot import RefreshingPlot, TimedPlotUpdate
 
 
 class PlottingExecutorFactory(ExecutorFactory):
-    def __init__(self, plot: RefreshingPlot, source: DataSource, channel: int) -> None:
+    def __init__(self, plot: RefreshingPlot, source: DataSource) -> None:
         plot_strategy = TimedPlotUpdate(plot=plot, window_size=500, update_time=1)
 
         handlers = [
-            ChannelSelector(channel=channel),
             Plot(strategy=plot_strategy),
         ]
 

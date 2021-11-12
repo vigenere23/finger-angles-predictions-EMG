@@ -1,6 +1,6 @@
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Generic, Iterator
+from typing import Generic, Iterator, List
 from datetime import datetime
 from queue import Queue
 from dataclasses import replace
@@ -100,3 +100,27 @@ class ChannelSelector(DataHandler[ProcessedData[InputType], ProcessedData[InputT
         for data in input:
             if data.channel == self.__channel:
                 yield data
+
+
+class BranchedHandlers(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
+    def __init__(self, handlers: List[DataHandler]) -> None:
+        self.__handlers = handlers
+    
+    def __wrap(self, iterator: Iterator[ProcessedData[InputType]]) -> Iterator[ProcessedData[OutputType]]:
+        wrapper = iterator
+        for handler in self.__handlers:
+            wrapper = handler.handle(wrapper)
+
+        wrapper = map(lambda _: next(iterator), wrapper)
+
+        return wrapper
+
+    def handle(self, input: Iterator[ProcessedData[InputType]]) -> Iterator[ProcessedData[InputType]]:
+        for data in self.__wrap(input):
+            yield data
+
+
+class ToZero(DataHandler[ProcessedData[InputType], ProcessedData[int]]):
+    def handle(self, input: Iterator[ProcessedData[InputType]]) -> Iterator[ProcessedData[int]]:
+        for _ in input:
+            yield 0

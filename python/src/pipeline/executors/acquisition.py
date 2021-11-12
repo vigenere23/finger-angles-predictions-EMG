@@ -9,7 +9,7 @@ from src.pipeline.executors.plotting import PlottingExecutorFactory
 from src.pipeline.executors.processing import ProcessingExecutorFactory
 from src.pipeline.executors.queues import QueuesExecutorFactory
 from src.pipeline.executors.serial import SerialExecutorFactory
-from src.pipeline.handlers import AddToQueue
+from src.pipeline.handlers import AddToQueue, BranchedHandlers, ChannelSelector
 from src.pipeline.processes import ExecutorProcess, SleepingExecutorProcess
 from src.pipeline.sources import QueueSource
 from src.utils.plot import RefreshingPlot
@@ -50,7 +50,10 @@ class AcquisitionExperiment(Executor):
     def add_plotting(self, channel: int):
         queue = NamedQueue(name=f'plot-{channel}', queue=Queue())
         self.__processing.add_output(
-            AddToQueue(queue=queue, strategy=NonBlockingPut())
+            BranchedHandlers(handlers=[
+                ChannelSelector(channel=channel),
+                AddToQueue(queue=queue, strategy=NonBlockingPut())
+            ])
         )
 
         plot = RefreshingPlot(
@@ -60,8 +63,7 @@ class AcquisitionExperiment(Executor):
         )
         plotting = PlottingExecutorFactory(
             plot=plot,
-            source=QueueSource(queue=queue, strategy=BlockingFetch()),
-            channel=channel
+            source=QueueSource(queue=queue, strategy=BlockingFetch())
         )
 
         self.__plottings.append(plotting)

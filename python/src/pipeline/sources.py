@@ -51,7 +51,7 @@ class FrequencyFakeSerialSource(DataSource[SourceData[bytes]]):
     def __init__(self):
         self.__data_length = 256
         self.__message_length = 2
-        self.__nb_channels = 1
+        self.__nb_channels = 2
         self.__sample_rate = 2000
         self.__signal_frequency = 2 * pi * 5
         self.__signal_amplitude = 4000
