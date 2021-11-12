@@ -1,12 +1,12 @@
 from src.pipeline.executors.base import Executor, ExecutorFactory, HandlersExecutor
-from src.pipeline.savers import CSVSaver
+from src.pipeline.savers import CSVWriter, Complete
 from src.pipeline.sources import DataSource
 
 
 class CSVExecutorFactory(ExecutorFactory):
     def __init__(self, source: DataSource, path: str) -> None:
         handlers = [
-            CSVSaver(file=path, batch_size=100)
+            CSVWriter(file=path, batch_size=100, strategy=Complete())
         ]
 
         self.__executor = HandlersExecutor(source=source, handlers=handlers)

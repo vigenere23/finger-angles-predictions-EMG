@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from datetime import datetime
 from multiprocessing import Queue
-from typing import List
+from typing import Dict
 from src.pipeline.executors.base import Executor, ExecutorFactory, ProcessesExecutor
 from src.pipeline.executors.csv import CSVExecutorFactory
 from src.pipeline.executors.plotting import PlottingExecutorFactory
@@ -30,8 +30,7 @@ class AcquisitionExperiment(Executor):
         )
 
         self.__queues = [processing_queue]
-        self.__plottings: List[ExecutorFactory] = []
-        self.__csv: ExecutorFactory = None
+        self.__future_processes: Dict[str, ExecutorFactory] = {}
 
     def add_csv_saving(self):
         path = os.path.join(Path.cwd(), 'data', str(datetime.now().timestamp()), 'emg.csv')
@@ -40,11 +39,12 @@ class AcquisitionExperiment(Executor):
             AddToQueue(queue=queue, strategy=NonBlockingPut())
         )
 
-        self.__csv = CSVExecutorFactory(
+        csv = CSVExecutorFactory(
             source=QueueSource(queue=queue, strategy=BlockingFetch()),
             path=path
         )
 
+        self.__future_processes['CSV'] = csv
         self.__queues.append(queue)
 
     def add_plotting(self, channel: int):
@@ -66,7 +66,7 @@ class AcquisitionExperiment(Executor):
             source=QueueSource(queue=queue, strategy=BlockingFetch())
         )
 
-        self.__plottings.append(plotting)
+        self.__future_processes[f'Plot-{channel}'] = plotting
         self.__queues.append(queue)
 
     def execute(self):
@@ -75,13 +75,11 @@ class AcquisitionExperiment(Executor):
             ExecutorProcess(name='Processing', executor=self.__processing.create())
         ]
 
-        for i, plotting in enumerate(self.__plottings):
-            processes.append(
-                ExecutorProcess(name=f'Plotting {i}', executor=plotting.create())
-            )
-
-        if self.__csv:
-            processes.append(ExecutorProcess(name='CSV', executor=self.__csv.create()))
+        for process_name, executor_factory in self.__future_processes.items():
+            processes.append(ExecutorProcess(
+                name=process_name,
+                executor=executor_factory.create()
+            ))
         
         processes.append(
             SleepingExecutorProcess(
