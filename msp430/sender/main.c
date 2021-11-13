@@ -43,6 +43,6 @@ int main(void)
 
 #pragma vector=TIMER0_A0_VECTOR
 __interrupt void TIMER_A0_ISR (void) {
-    should_send_data = 1;
     clear_IFG_interrupt();
+    should_send_data = 1;
 }

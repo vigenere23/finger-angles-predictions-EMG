@@ -16,7 +16,7 @@ void receive_data() {
 
     receive_radio_data(receive_buffer);
 
-    int i;
+    unsigned char i;
     for (i = 0; i < RADIO_PACKET_LENGTH; i++) {
         send_uart_data_byte(receive_buffer[i]);
     }
