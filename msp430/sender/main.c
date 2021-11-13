@@ -1,5 +1,6 @@
 #include <msp430.h>
 #include <stdlib.h>
+#include "nRF.h"
 #include "radio.h"
 #include "clock.h"
 #include "utils.h"
@@ -7,42 +8,46 @@
 
 /* SENDER */
 
+char can_send_data = 1;
+char should_send_data = 0;
+char TX_data_buffer[32];
+unsigned char i;
 
-int should_send_data = 0;
+int main(void) {
+    WDTCTL = WDTPW + WDTHOLD;
+    OUTPUT(P1DIR, BIT0);
+    UNSET(P1OUT, BIT0);
 
-void send_data() {
-    should_send_data = 0;
-
-    int data1 = get_adc_value(ADC_CHANNEL_0);
-    int data2 = get_adc_value(ADC_CHANNEL_1);
-
-    send_radio_int_data(data1);
-    send_radio_int_data(data2);
-}
-
-int main(void)
-{
-    const long CLOCK_FREQUENCY = 8000000;
-
-    WDTCTL = WDTPW | WDTHOLD;
-
-    OUTPUT(P4DIR, BIT7);
-
-    setup_adc();
-    setup_clock(CLOCK_FREQUENCY);
-    setup_timer(CLOCK_FREQUENCY, 2000);
+    setup_clock(8000000);
+    setup_transmit_mode();
 
     __bis_SR_register(GIE);
 
-    while (1) {
-        if (should_send_data) {
-            send_data();
+    while(1) {
+        if (can_send_data) {
+            can_send_data = 0;
+            for(i = 0; i < 32; i++)
+                TX_data_buffer[i] = 0;
+
+            // Message to be sent = 'Hello!'
+            TX_data_buffer[0] = 'H';
+            TX_data_buffer[1] = 'e';
+            TX_data_buffer[2] = 'l';
+            TX_data_buffer[3] = 'l';
+            TX_data_buffer[4] = 'o';
+            TX_data_buffer[5] = '!';
+            send_radio_data(TX_data_buffer);
+            while(!can_send_data);
+            can_send_data = 0;
+            nRF_clear_IRQ();
         }
     }
 }
 
-#pragma vector=TIMER0_A0_VECTOR
-__interrupt void TIMER_A0_ISR (void) {
+#pragma vector=PORT2_VECTOR
+__interrupt void Port_2(void)
+{
     clear_IFG_interrupt();
-    should_send_data = 1;
+    can_send_data = 1;
+    TOGGGLE(P1OUT, BIT0);
 }

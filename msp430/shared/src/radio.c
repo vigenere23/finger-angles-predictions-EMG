@@ -42,16 +42,20 @@ void setup_nRF() {
     nRF_clear_IRQ();
 }
 
-void setup_transmit_mode() {
+void init_radio() {
     setup_radio_chip();
     setup_spi();
+    setup_nRF();
+}
+
+void setup_transmit_mode() {
+    init_radio();
     nRF_set_TX_mode();
     nRF_CE_low;
 }
 
 void setup_receive_mode() {
-    setup_radio_chip();
-    setup_spi();
+    init_radio();
     nRF_set_RX_mode();
     nRF_CE_high;
 }

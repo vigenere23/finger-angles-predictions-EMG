@@ -13,7 +13,13 @@ void setup_transmit_mode();
 
 void setup_receive_mode();
 
+void init_radio();
+
+void send_radio_data(const char* buffer);
+
 void send_radio_int_data(int data);
+
+void send_radio_byte_data(char data);
 
 void receive_radio_data(char* buffer);
 

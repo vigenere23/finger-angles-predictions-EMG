@@ -35,6 +35,9 @@ int main(void)
 
     WDTCTL = WDTPW | WDTHOLD;
 
+    OUTPUT(P1DIR, BIT0);
+    UNSET(P1OUT, BIT0);
+
     OUTPUT(P4DIR, BIT7);
 
     setup_clock(CLOCK_FREQUENCY);
@@ -52,6 +55,20 @@ int main(void)
 
 #pragma vector=PORT2_VECTOR
 __interrupt void Port_2(void) {
-    clear_IFG_interrupt();
     should_receive_data = 1;
+    TOGGGLE(P1OUT, BIT0);
+    clear_IFG_interrupt();
+}
+
+#pragma vector=USCI_A1_VECTOR
+__interrupt void USCI_A1_ISR(void) {
+    switch(__even_in_range(UCA1IV,4)) {
+        case 0:break;
+        case 2:
+            TOGGGLE(P1OUT, BIT0);
+            break;
+        case 4:break;
+        default:
+        break;
+    }
 }
