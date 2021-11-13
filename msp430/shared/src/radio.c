@@ -4,9 +4,11 @@
 
 char transmit_buffer[RADIO_PACKET_LENGTH];
 unsigned char transmit_counter = 0;
+char can_send_data = 1;
 
 void clear_IFG_interrupt() {
     P2IFG &= ~BIT3;
+    can_send_data = 1;
 }
 
 void clear_IRQ_interrupt() {
@@ -66,6 +68,9 @@ void send_radio_data(const char* buffer) {
     __delay_cycles(85); // must be at least 10 us, 80 is minimum for 8MHz
     nRF_CE_low;
     clear_IRQ_interrupt();
+
+    while(!can_send_data);
+    nRF_clear_IRQ();
 }
 
 void send_radio_byte_data(char data) {

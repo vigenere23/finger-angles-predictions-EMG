@@ -38,8 +38,6 @@ int main(void)
     OUTPUT(P1DIR, BIT0);
     UNSET(P1OUT, BIT0);
 
-    OUTPUT(P4DIR, BIT7);
-
     setup_clock(CLOCK_FREQUENCY);
     setup_uart(&UART_CONFIG);
     setup_receive_mode();
@@ -65,7 +63,7 @@ __interrupt void USCI_A1_ISR(void) {
     switch(__even_in_range(UCA1IV,4)) {
         case 0:break;
         case 2:
-            TOGGGLE(P1OUT, BIT0);
+            // TOGGGLE(P1OUT, BIT0);
             break;
         case 4:break;
         default:
