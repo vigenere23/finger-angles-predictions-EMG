@@ -21,7 +21,7 @@ class SpeedTest(Executor):
         handlers = [
             ProcessFromUART(),
             ToInt(),
-            Time(logger=logger),
+            Time(logger=logger, timeout=5),
         ]
 
         executor = HandlersExecutor(source=source, handlers=handlers)
@@ -29,6 +29,6 @@ class SpeedTest(Executor):
         process = ExecutorProcess(name='Speed test', executor=executor)
         executor = ProcessesExecutor(processes=[
             process
-        ], wait_for_ending=True)
+        ])
 
         executor.execute()

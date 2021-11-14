@@ -5,17 +5,11 @@
 
 #define RADIO_PACKET_LENGTH nRF_packet_len
 
-void clear_IRQ_interrupt();
-
 void clear_IFG_interrupt();
 
-void setup_transmit_mode();
+void setup_radio_transmit_mode();
 
-void setup_receive_mode();
-
-void init_radio();
-
-void send_radio_data(const char* buffer);
+void setup_radio_receive_mode();
 
 void send_radio_int_data(int data);
 

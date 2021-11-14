@@ -50,19 +50,20 @@ void init_radio() {
     setup_nRF();
 }
 
-void setup_transmit_mode() {
+void setup_radio_transmit_mode() {
     init_radio();
     nRF_set_TX_mode();
     nRF_CE_low;
 }
 
-void setup_receive_mode() {
+void setup_radio_receive_mode() {
     init_radio();
     nRF_set_RX_mode();
     nRF_CE_high;
 }
 
 void send_radio_data(const char* buffer) {
+    can_send_data = 0;
     nRF_upload_TX_payload(buffer);
     nRF_CE_high;
     __delay_cycles(85); // must be at least 10 us, 80 is minimum for 8MHz
