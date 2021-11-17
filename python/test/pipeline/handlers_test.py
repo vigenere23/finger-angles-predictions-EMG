@@ -103,7 +103,3 @@ def chain_handlers(iterator: Iterator, handlers: List[DataHandler]) -> Iterator:
 
 def create_branched_handler(condition: BranchingCondition = AlwaysTrueCondition(), receiver = lambda _: None):
     return BranchedHandler(condition=condition, handlers=[Transformer(), Transferer(receiver)])
-
-
-if __name__ == '__main__':
-    unittest.main()
