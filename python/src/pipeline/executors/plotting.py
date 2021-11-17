@@ -6,7 +6,7 @@ from src.utils.plot import RefreshingPlot, TimedPlotUpdate
 
 class PlottingExecutorFactory(ExecutorFactory):
     def __init__(self, plot: RefreshingPlot, source: DataSource) -> None:
-        plot_strategy = TimedPlotUpdate(plot=plot, window_size=500, update_time=1)
+        plot_strategy = TimedPlotUpdate(plot=plot, window_size=300, update_time=1)
 
         handlers = [
             Plot(strategy=plot_strategy),

@@ -39,7 +39,7 @@ int main(void)
     UNSET(P4OUT, BIT7);
 
     setup_clock(CLOCK_FREQUENCY);
-    setup_timer(CLOCK_FREQUENCY, 2000);
+    setup_timer(CLOCK_FREQUENCY, 2500);
     setup_adc();
     setup_uart(&UART_CONFIG);
 

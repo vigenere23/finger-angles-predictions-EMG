@@ -10,7 +10,7 @@ from src.pipeline.executors.plotting import PlottingExecutorFactory
 from src.pipeline.executors.processing import ProcessingExecutorFactory
 from src.pipeline.executors.queues import QueuesExecutorFactory
 from src.pipeline.executors.serial import SerialExecutorFactory
-from src.pipeline.handlers import AddToQueue, BranchedHandlers, ChannelSelector
+from src.pipeline.handlers import AddToQueue, BranchedHandler, ChannelSelection, Print
 from src.pipeline.processes import ExecutorProcess, SleepingExecutorProcess
 from src.pipeline.sources import QueueSource
 from src.utils.plot import RefreshingPlot
@@ -33,7 +33,7 @@ class AcquisitionExperiment(Executor):
         base_csv_path = os.path.join(Path.cwd(), 'data', f'acq-{datetime.now().timestamp()}')
 
         for config in configs:
-            handlers = [ChannelSelector(channel=config.channel)]
+            handlers = []
 
             if config.plot:
                 queue = NamedQueue(name=f'plot-{config.channel}', queue=Queue())
@@ -66,7 +66,7 @@ class AcquisitionExperiment(Executor):
                 queues.append(queue)
 
             processing_outputs.append(
-                BranchedHandlers(handlers=handlers)
+                BranchedHandler(condition=ChannelSelection(config.channel), handlers=handlers)
             )
 
         processing_queue = NamedQueue(name='processing', queue=Queue())

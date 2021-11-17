@@ -92,31 +92,33 @@ class Plot(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
             yield data
 
 
-class ChannelSelector(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
-    def __init__(self, channel: int) -> None:
+class BranchingCondition(ABC, Generic[InputType]):
+    def check(self, item: InputType) -> bool:
+        raise NotImplementedError()
+
+
+class ChannelSelection(BranchingCondition[ProcessedData]):
+    def __init__(self, channel: int):
         self.__channel = channel
+
+    def check(self, item: ProcessedData) -> bool:
+        return item.channel == self.__channel
+
+
+class BranchedHandler(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
+    def __init__(self, condition: BranchingCondition, handlers: List[DataHandler]) -> None:
+        self.__condition = condition
+        self.__handlers = handlers
 
     def handle(self, input: Iterator[ProcessedData[InputType]]) -> Iterator[ProcessedData[InputType]]:
         for data in input:
-            if data.channel == self.__channel:
-                yield data
+            wrapped_data = [data]
+            for handler in self.__handlers:
+                wrapped_data = handler.handle(wrapped_data)
 
-
-class BranchedHandlers(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
-    def __init__(self, handlers: List[DataHandler]) -> None:
-        self.__handlers = handlers
-    
-    def __wrap(self, iterator: Iterator[ProcessedData[InputType]]) -> Iterator[ProcessedData[OutputType]]:
-        wrapper = iterator
-        for handler in self.__handlers:
-            wrapper = handler.handle(wrapper)
-
-        wrapper = map(lambda _: next(iterator), wrapper)
-
-        return wrapper
-
-    def handle(self, input: Iterator[ProcessedData[InputType]]) -> Iterator[ProcessedData[InputType]]:
-        for data in self.__wrap(input):
+            if self.__condition.check(data):
+                next(wrapped_data)
+            
             yield data
 
 
