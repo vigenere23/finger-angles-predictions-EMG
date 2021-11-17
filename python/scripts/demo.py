@@ -11,5 +11,7 @@ def run(args: DemoArgs):
     for channel in args.csv:
         builder.add_csv_for(channel)
 
+    builder.set_serial_port(serial_port=args.serial_port)
+
     experiment = builder.build()
     experiment.execute()

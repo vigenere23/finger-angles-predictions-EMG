@@ -2,7 +2,6 @@ from dataclasses import replace
 from typing import Iterator
 from numpy import cos, pi
 from src.pipeline.data import ProcessedData
-
 from src.pipeline.handlers import DataHandler
 
 
@@ -48,7 +47,7 @@ from src.pipeline.handlers import DataHandler
 
 class NotchFrequency(DataHandler[ProcessedData[int], ProcessedData[int]]):
     def __init__(self, R: float, frequency: float, sampling_frequency: float):
-        wn = 2 * frequency / sampling_frequency
+        wn = pi * frequency / sampling_frequency
         self.__R = R
         self.__R_square = R**2
         self.__cos_wn = cos(wn)
@@ -74,3 +73,7 @@ class NotchFrequency(DataHandler[ProcessedData[int], ProcessedData[int]]):
             self.__y_nm2 = self.__y_nm1
 
             yield replace(data, value=y_n)
+
+    def coefficients(self):
+        return [1, -2 * self.__cos_wn, 1], [1, -2 * self.__R * self.__cos_wn, self.__R_square]
+        # return [1, -2, 1], [1, -2 * self.__R, 1]

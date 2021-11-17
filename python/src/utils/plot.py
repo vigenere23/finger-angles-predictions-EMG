@@ -108,8 +108,9 @@ class TimedPlotUpdate(PlottingStrategy):
         if deltatime.total_seconds() >= self.__update_time:
             self.__start = datetime.now()
 
-            X = self.__x_history.to_list()
             Y = self.__y_history.to_list()
+            # X = self.__x_history.to_list()
+            X = list(range(len(Y)))
 
             std_Y = np.std(Y)
 

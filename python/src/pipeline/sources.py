@@ -97,6 +97,9 @@ class SerialDataSource(DataSource[SourceData[bytes]]):
 
         serial.reset_input_buffer()
         serial.reset_output_buffer()
+        
+        if serial.in_waiting:
+            serial.read(serial.in_waiting)
 
         self.__serial = serial
         self.__sync_byte = sync_byte
@@ -105,7 +108,6 @@ class SerialDataSource(DataSource[SourceData[bytes]]):
         self.__verbose = verbose
 
     def get(self) -> Iterator[SourceData[bytes]]:
-        self.__serial.read(self.__serial.in_waiting)
 
         start = datetime.now()
         self.__serial.read_until(self.__sync_byte)

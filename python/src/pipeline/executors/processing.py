@@ -18,12 +18,12 @@ class ProcessingExecutorFactory(ExecutorFactory):
         handlers = [
             ProcessFromUART(),
             ToInt(),
-            # NotchFrequency(R=1.4, frequency=60, sampling_frequency=2000), # TODO R = 2??
+            # NotchFrequency(R=0.99, frequency=60, sampling_frequency=2000), # TODO R = 2??
             Time(logger=logger, timeout=5),
             *self.__output_handlers,
         ]
 
         executor = HandlersExecutor(source=self.__source, handlers=handlers)
-        executor = Retryer(executor=executor, nb_retries=10)
+        executor = Retryer(executor=executor, nb_retries=20)
 
         return executor

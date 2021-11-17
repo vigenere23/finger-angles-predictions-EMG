@@ -7,21 +7,21 @@ const UARTConfig* CONFIG;
 int data_counter = 0;
 
 
-void send_uart_byte(char byte) {
+void send_byte(char byte) {
     while(!(UCA1IFG & UCTXIFG)); // Wait for TX buffer to be ready for new data
     UCA1TXBUF = byte;
 }
 
 
 void send_uart_prefix() {
-    send_uart_byte(CONFIG->sync_byte);
-    send_uart_byte(CONFIG->channels);
-    send_uart_byte(CONFIG->message_length);
-    send_uart_byte(CONFIG->data_length);
+    send_byte(CONFIG->sync_byte);
+    send_byte(CONFIG->channels);
+    send_byte(CONFIG->message_length);
+    send_byte(CONFIG->data_length);
 }
 
 void send_uart_suffix() {
-    send_uart_byte(CONFIG->check_byte);
+    send_byte(CONFIG->check_byte);
 }
 
 
@@ -50,14 +50,20 @@ void send_uart_data_int(int data) {
     send_uart_data_byte(data & 0xFF);
 }
 
+void update_data_counter() {
+    data_counter++;
+    if (data_counter == CONFIG->data_length) {
+        data_counter = 0;
+    }
+}
+
 void send_uart_data_byte(char data) {
     if (data_counter == 0) {
         send_uart_prefix();
     }
 
-    send_uart_byte(data);
-
-    data_counter = (data_counter + 1) % CONFIG->data_length;
+    send_byte(data);
+    update_data_counter();
 
     if (data_counter == 0) {
         send_uart_suffix();
