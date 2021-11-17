@@ -27,7 +27,7 @@ int main(void)
     const long CLOCK_FREQUENCY = 8000000;
     const UARTConfig UART_CONFIG = {
         .sync_byte = '\n',
-        .channels = 1,
+        .channels = 2,
         .data_length = 64,
         .message_length = 2,
         .check_byte = 0xFF
