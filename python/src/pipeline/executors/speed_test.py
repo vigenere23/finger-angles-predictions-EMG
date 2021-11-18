@@ -1,7 +1,7 @@
 from src.pipeline.executors.base import Executor, HandlersExecutor, ProcessesExecutor, Retryer
 from src.pipeline.handlers import ProcessFromUART, Time, ToInt
 from src.pipeline.processes import ExecutorProcess
-from src.pipeline.sources import SerialDataSource
+from src.pipeline.sources import SerialSource
 from src.utils.loggers import ConsoleLogger
 
 
@@ -11,7 +11,7 @@ class SpeedTest(Executor):
     
     def execute(self):
         logger = ConsoleLogger(prefix="[speed-test]")
-        source = SerialDataSource(
+        source = SerialSource(
             port=self.__port,
             baudrate=115200,
             sync_byte=b'\n',

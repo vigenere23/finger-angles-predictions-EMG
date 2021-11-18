@@ -1,15 +1,22 @@
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from serial import Serial
 from math import pi, sin
 from random import randint
 from time import sleep
 from abc import ABC, abstractmethod
-from typing import Iterator, Generic
+from typing import Iterator, Generic, List
 from serial.serialutil import PARITY_NONE, PARITY_ODD
 from src.pipeline.data import SourceData
 from src.utils.loggers import Logger
 from src.utils.queues import NamedQueue, QueueFetchingStrategy
 from src.utils.types import OutputType
+
+
+@dataclass
+class FrequencyConfig:
+    amplitude: int
+    frequency: int
 
 
 class DataSource(ABC, Generic[OutputType]):
@@ -18,7 +25,7 @@ class DataSource(ABC, Generic[OutputType]):
         raise NotImplementedError()
 
 
-class RandomFakeSerialSource(DataSource[SourceData[bytes]]):
+class RandomSource(DataSource[SourceData[bytes]]):
     def __init__(self):
         self.__data_length = 32
         self.__message_length = 2
@@ -47,22 +54,23 @@ class RandomFakeSerialSource(DataSource[SourceData[bytes]]):
         sleep(self.__dt.total_seconds())
 
 
-class FrequencyFakeSerialSource(DataSource[SourceData[bytes]]):
-    def __init__(self):
+class FrequencySource(DataSource[SourceData[bytes]]):
+    def __init__(self, configs: List[FrequencyConfig]):
         self.__data_length = 256
         self.__message_length = 2
         self.__nb_channels = 2
-        self.__sample_rate = 2000
-        self.__signal_frequency = 2 * pi * 5
-        self.__signal_amplitude = 4000
+        self.__sample_rate = 2500
+        self.__configs = configs
 
         self.__sample_dt = timedelta(seconds=1/self.__sample_rate)
         self.__sleep_dt = timedelta(seconds=(self.__data_length+5)/(self.__sample_rate*2*self.__nb_channels))
         self.__start = datetime.now()
 
     def __generate(self, t: float) -> bytes:
-        data = self.__signal_amplitude * sin(self.__signal_frequency * t)
-        data += self.__signal_amplitude / 5 * sin(2 * pi * 60 * t)
+        data = 0
+        for config in self.__configs:
+            data += config.amplitude * sin(2 * pi * config.frequency * t)
+
         return int(data).to_bytes(2, 'big', signed=True)
 
     def get(self) -> Iterator[SourceData[bytes]]:
@@ -90,7 +98,7 @@ class FrequencyFakeSerialSource(DataSource[SourceData[bytes]]):
         sleep((self.__sleep_dt - delay).total_seconds())
 
 
-class SerialDataSource(DataSource[SourceData[bytes]]):
+class SerialSource(DataSource[SourceData[bytes]]):
     def __init__(self, port: str, baudrate: int, sync_byte: bytes, check_byte: bytes, logger: Logger, use_parity: bool = False, verbose: bool = False):
         parity = PARITY_ODD if use_parity else PARITY_NONE
         serial = Serial(port=port, baudrate=baudrate, parity=parity)
