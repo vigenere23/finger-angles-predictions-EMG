@@ -76,7 +76,7 @@ class AcquisitionExperiment(Executor):
             handlers_list = HandlersList(handlers)
 
             processing_outputs.append(
-                ConditionalHandler(condition=ChannelSelection(config.channel), handler=handlers_list)
+                ConditionalHandler(condition=ChannelSelection(config.channel), child=handlers_list)
             )
 
         processing_queue = NamedQueue(name='processing', queue=Queue())

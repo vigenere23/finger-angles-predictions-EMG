@@ -137,13 +137,13 @@ class ChannelSelection(Condition[ProcessedData]):
 
 
 class ConditionalHandler(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
-    def __init__(self, condition: Condition, handler: DataHandler) -> None:
+    def __init__(self, condition: Condition, child: DataHandler) -> None:
         super().__init__()
         self.__condition = condition
-        self.__conditional_handler = handler
+        self.__child = child
 
     def handle(self, input: InputType):
         if self.__condition.check(input):
-            self.__conditional_handler.handle(input)
+            self.__child.handle(input)
         
         self._next(input)
