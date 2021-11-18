@@ -1,5 +1,5 @@
-from src.pipeline.executors.base import Executor, HandlersExecutor, ProcessesExecutor, Retryer
-from src.pipeline.handlers import ProcessFromUART, Time, ToInt
+from src.pipeline.executors.base import Executor, FromSourceExecutor, ProcessesExecutor, Retryer
+from src.pipeline.handlers import HandlersList, ProcessFromUART, Time, ToInt
 from src.pipeline.processes import ExecutorProcess
 from src.pipeline.sources import SerialSource
 from src.utils.loggers import ConsoleLogger
@@ -18,13 +18,13 @@ class SpeedTest(Executor):
             check_byte=b'\xff',
             logger=None,
         )
-        handlers = [
+        handler = HandlersList([
             ProcessFromUART(),
             ToInt(),
             Time(logger=logger, timeout=5),
-        ]
+        ])
 
-        executor = HandlersExecutor(source=source, handlers=handlers)
+        executor = FromSourceExecutor(source=source, handler=handler)
         executor = Retryer(executor=executor, nb_retries=5)
         process = ExecutorProcess(name='Speed test', executor=executor)
         executor = ProcessesExecutor(processes=[

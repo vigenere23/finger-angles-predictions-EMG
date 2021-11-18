@@ -15,8 +15,8 @@ from src.utils.types import OutputType
 
 @dataclass
 class FrequencyConfig:
-    amplitude: int
-    frequency: int
+    amplitude: float
+    frequency: float
 
 
 class DataSource(ABC, Generic[OutputType]):
@@ -67,9 +67,9 @@ class FrequencySource(DataSource[SourceData[bytes]]):
         self.__start = datetime.now()
 
     def __generate(self, t: float) -> bytes:
-        data = 0
+        data = 0.0
         for config in self.__configs:
-            data += config.amplitude * sin(2 * pi * config.frequency * t)
+            data += config.amplitude * sin(2.0 * pi * config.frequency * t)
 
         return int(data).to_bytes(2, 'big', signed=True)
 
@@ -83,8 +83,10 @@ class FrequencySource(DataSource[SourceData[bytes]]):
             data.extend((value for _ in range(self.__nb_channels)))
             end += self.__sample_dt
 
+        data = b''.join(data)
+
         yield SourceData(
-            value=b''.join(data),
+            value=data,
             start=self.__start,
             end=end - self.__sample_dt,
             length=self.__data_length,

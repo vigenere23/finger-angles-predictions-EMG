@@ -1,16 +1,15 @@
 from typing import Iterator, List
 from unittest import TestCase
-import unittest
 from unittest.mock import MagicMock
-from src.pipeline.handlers import BranchedHandler, BranchingCondition, DataHandler
+from src.pipeline.handlers import ConditionalHandler, Condition, DataHandler
 
 
-class AlwaysTrueCondition(BranchingCondition):
+class AlwaysTrueCondition(Condition):
     def check(self, _) -> bool:
         return True
 
 
-class AlwaysFalseCondition(BranchingCondition):
+class AlwaysFalseCondition(Condition):
     def check(self, _) -> bool:
         return False
 
@@ -101,5 +100,5 @@ def chain_handlers(iterator: Iterator, handlers: List[DataHandler]) -> Iterator:
     return iterator
 
 
-def create_branched_handler(condition: BranchingCondition = AlwaysTrueCondition(), receiver = lambda _: None):
-    return BranchedHandler(condition=condition, handlers=[Transformer(), Transferer(receiver)])
+def create_branched_handler(condition: Condition = AlwaysTrueCondition(), receiver = lambda _: None):
+    return ConditionalHandler(condition=condition, handlers=[Transformer(), Transferer(receiver)])

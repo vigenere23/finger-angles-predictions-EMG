@@ -1,29 +1,25 @@
-from src.pipeline.executors.base import Executor, ExecutorFactory, HandlersExecutor, Retryer
-from src.pipeline.filters import NotchFrequency
-from src.pipeline.handlers import DataHandler, ProcessFromUART, Time, ToInt
+from src.pipeline.executors.base import Executor, ExecutorFactory, FromSourceExecutor, Retryer
+from src.pipeline.handlers import DataHandler, HandlersList, Print, ProcessFromUART, Time, ToInt
 from src.pipeline.sources import DataSource
 from src.utils.loggers import ConsoleLogger
 
 
 class ProcessingExecutorFactory(ExecutorFactory):
-    def __init__(self, source: DataSource) -> None:
+    def __init__(self, source: DataSource, output_handler: DataHandler) -> None:
         self.__source = source
-        self.__output_handlers = []
-
-    def add_output(self, handler: DataHandler):
-        self.__output_handlers.append(handler)
+        self.__output_handler = output_handler
 
     def create(self) -> Executor:
         logger = ConsoleLogger(prefix="[processing]")
-        handlers = [
+        handler = HandlersList([
             ProcessFromUART(),
             ToInt(),
-            # NotchFrequency(R=0.99, frequency=60, sampling_frequency=2000), # TODO R = 2??
             Time(logger=logger, timeout=5),
-            *self.__output_handlers,
-        ]
+            self.__output_handler,
+            # Print(logger=ConsoleLogger()),
+        ])
 
-        executor = HandlersExecutor(source=self.__source, handlers=handlers)
-        executor = Retryer(executor=executor, nb_retries=20)
+        executor = FromSourceExecutor(source=self.__source, handler=handler)
+        executor = Retryer(executor=executor, nb_retries=1)
 
         return executor

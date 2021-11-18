@@ -18,4 +18,5 @@ class SourceData(Generic[DataType]):
 class ProcessedData(Generic[DataType]):
     time: float
     channel: int
-    value: DataType
+    original: DataType
+    filtered: DataType

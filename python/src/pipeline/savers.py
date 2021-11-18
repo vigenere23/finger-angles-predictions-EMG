@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from os import path, makedirs
 import csv
-from typing import Iterator, List, Optional
+from typing import List, Optional
 from src.pipeline.data import ProcessedData
 from src.utils.types import InputType
 from src.pipeline.handlers import DataHandler
@@ -25,7 +25,7 @@ class Complete(CSVSavingStrategy):
         return [
             data.channel,
             data.time,
-            data.value
+            data.filtered
         ]
 
 
@@ -35,7 +35,7 @@ class ValueOnly(CSVSavingStrategy):
 
     def create_row(self, data: ProcessedData[InputType]) -> List[str]:
         return [
-            data.value
+            data.filtered
         ]
 
 
@@ -46,12 +46,13 @@ class WithoutChannel(CSVSavingStrategy):
     def create_row(self, data: ProcessedData[InputType]) -> List[str]:
         return [
             data.time,
-            data.value
+            data.filtered
         ]
 
 
 class CSVWriter(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
     def __init__(self, file: str, batch_size: int, strategy: CSVSavingStrategy) -> None:
+        super().__init__()
         self.__file = file
         self.__batch_size = batch_size
         self.__strategy = strategy
@@ -66,17 +67,14 @@ class CSVWriter(DataHandler[ProcessedData[InputType], ProcessedData[InputType]])
         if header:
             self.__write_rows([header])
 
+    def handle(self, input: ProcessedData[InputType]) -> ProcessedData[InputType]:
+        self.__buffer.append(self.__strategy.create_row(input))
 
-    def handle(self, input: Iterator[ProcessedData[InputType]]) -> Iterator[ProcessedData[InputType]]:
-        for data in input:
-            self.__buffer.append(self.__strategy.create_row(data))
+        if len(self.__buffer) == self.__batch_size:
+            self.__write_rows(self.__buffer)
+            self.__buffer = []
 
-            if len(self.__buffer) == self.__batch_size:
-                self.__write_rows(self.__buffer)
-                self.__buffer = []
-
-            yield data
-
+        self._next(input)
 
     def __write_rows(self, rows):
         with open(self.__file, 'a+', newline='\n') as csvfile:

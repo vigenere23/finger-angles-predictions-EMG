@@ -19,19 +19,15 @@ class ExecutorFactory(ABC):
         raise NotImplementedError()
 
 
-class HandlersExecutor(Executor):
-    def __init__(self, source: DataSource, handlers: List[DataHandler]) -> None:
+class FromSourceExecutor(Executor):
+    def __init__(self, source: DataSource, handler: DataHandler) -> None:
         self.__source = source
-        self.__handlers = handlers
+        self.__handler = handler
 
     def execute(self):
         data = self.__source.get()
-        for handler in self.__handlers:
-            data = handler.handle(data)
-        
-        # triggers data execution
-        for _ in data:
-            pass
+        for input in data:
+            self.__handler.handle(input)
 
 
 class Retryer(Executor):
@@ -54,15 +50,13 @@ class Retryer(Executor):
             raise RuntimeError('Maximum number of retries exceeded')
 
 
-class PrinterExecutor(Executor):
-    def __init__(self, name: str, executor: Executor) -> None:
-        self.__name = name
+class LoopExecutor(Executor):
+    def __init__(self, executor: Executor):
         self.__executor = executor
 
     def execute(self):
-        print(f'{self.__name} started')
-        self.__executor.execute()
-        print(f'{self.__name} ended')
+        while True:
+            self.__executor.execute()
 
 
 class ThreadsExecutor(Executor):

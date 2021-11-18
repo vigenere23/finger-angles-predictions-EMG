@@ -1,12 +1,13 @@
-from typing import List
-from src.pipeline.executors.base import Executor, ExecutorFactory, HandlersExecutor, Retryer
+from src.pipeline.executors.base import Executor, ExecutorFactory, FromSourceExecutor, Retryer
 from src.pipeline.handlers import DataHandler
 from src.pipeline.sources import FrequencyConfig, RandomSource, FrequencySource, SerialSource
 from src.utils.loggers import ConsoleLogger
 
 
 class SerialExecutorFactory(ExecutorFactory):
-    def __init__(self, port: str, output_handlers: List[DataHandler]) -> None:
+    def __init__(self, port: str, output_handler: DataHandler) -> None:
+        self.__output_handler = output_handler
+
         logger = ConsoleLogger(prefix="[serial]")
 
         if port == 'rand':
@@ -18,8 +19,8 @@ class SerialExecutorFactory(ExecutorFactory):
                     amp, freq = config.split('-')
                     configs.append(
                         FrequencyConfig(
-                            amplitude=int(amp),
-                            frequency=int(freq))
+                            amplitude=float(amp),
+                            frequency=float(freq))
                     )
                 self.__source = FrequencySource(configs=configs)
             except KeyError:
@@ -34,15 +35,9 @@ class SerialExecutorFactory(ExecutorFactory):
                 logger=logger,
                 # verbose=True
             )
-
-        self.__output_handlers = output_handlers
         
     def create(self) -> Executor:
-        handlers = [
-            *self.__output_handlers,
-        ]
-
-        executor = HandlersExecutor(source=self.__source, handlers=handlers)
+        executor = FromSourceExecutor(source=self.__source, handler=self.__output_handler)
         executor = Retryer(executor=executor, nb_retries=10)
 
         return executor

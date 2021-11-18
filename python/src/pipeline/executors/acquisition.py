@@ -10,7 +10,8 @@ from src.pipeline.executors.plotting import PlottingExecutorFactory
 from src.pipeline.executors.processing import ProcessingExecutorFactory
 from src.pipeline.executors.queues import QueuesExecutorFactory
 from src.pipeline.executors.serial import SerialExecutorFactory
-from src.pipeline.handlers import AddToQueue, BranchedHandler, ChannelSelection, Print
+from src.pipeline.filters import NotchDC, NotchFrequency2, NotchFrequencyScipy
+from src.pipeline.handlers import AddToQueue, ConditionalHandler, ChannelSelection, HandlersList, Print
 from src.pipeline.processes import ExecutorProcess, SleepingExecutorProcess
 from src.pipeline.sources import QueueSource
 from src.utils.plot import RefreshingPlot
@@ -33,20 +34,27 @@ class AcquisitionExperiment(Executor):
         base_csv_path = os.path.join(Path.cwd(), 'data', f'acq-{datetime.now().timestamp()}')
 
         for config in configs:
-            handlers = []
+            handlers = [
+                NotchDC(R=0.99),
+                NotchFrequencyScipy(frequency=60, sampling_frequency=2500),
+                # NotchFrequency2(BW=5, frequency=60, sampling_frequency=2500),
+            ]
 
             if config.plot:
                 queue = NamedQueue(name=f'plot-{config.channel}', queue=Queue())
                 handlers.append(AddToQueue(queue=queue, strategy=NonBlockingPut()))
 
                 plot = RefreshingPlot(
+                    series=['original', 'filtered'],
                     title=f'UART data from channel {config.channel}',
                     x_label='time',
                     y_label='value',
                 )
                 plotting = PlottingExecutorFactory(
                     plot=plot,
-                    source=QueueSource(queue=queue, strategy=BlockingFetch())
+                    source=QueueSource(queue=queue, strategy=BlockingFetch()),
+                    n_ys=2,
+                    window_size=333,
                 )
 
                 executor_factories[f'Plot-{config.channel}'] = plotting
@@ -65,23 +73,25 @@ class AcquisitionExperiment(Executor):
                 executor_factories[f'CSV-{config.channel}'] = csv
                 queues.append(queue)
 
+            handlers_list = HandlersList(handlers)
+
             processing_outputs.append(
-                BranchedHandler(condition=ChannelSelection(config.channel), handlers=handlers)
+                ConditionalHandler(condition=ChannelSelection(config.channel), handler=handlers_list)
             )
 
         processing_queue = NamedQueue(name='processing', queue=Queue())
         processing = ProcessingExecutorFactory(
-            source=QueueSource(queue=processing_queue, strategy=BlockingFetch())
+            source=QueueSource(queue=processing_queue, strategy=BlockingFetch()),
+            output_handler=HandlersList(processing_outputs)
         )
-        for output_handler in processing_outputs:
-            processing.add_output(output_handler)
 
         queues.append(processing_queue)
         executor_factories['Processing'] = processing
 
-        serial = SerialExecutorFactory(port=serial_port, output_handlers=[
-            AddToQueue(queue=processing_queue, strategy=NonBlockingPut())
-        ])
+        serial = SerialExecutorFactory(
+            port=serial_port,
+            output_handler=AddToQueue(queue=processing_queue, strategy=NonBlockingPut())
+        )
         executor_factories['Serial'] = serial
 
         processes = []
