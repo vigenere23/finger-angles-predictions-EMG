@@ -1,5 +1,5 @@
 from src.pipeline.executors.base import Executor, ExecutorFactory, FromSourceExecutor, Retryer
-from src.pipeline.handlers import DataHandler, HandlersList, Print, ProcessFromUART, Time, ToInt
+from src.pipeline.handlers import DataHandler, HandlersList, Print, ProcessFromUART, Time, TimeChecker, ToInt
 from src.pipeline.sources import DataSource
 from src.utils.loggers import ConsoleLogger
 
@@ -16,6 +16,7 @@ class ProcessingExecutorFactory(ExecutorFactory):
             ToInt(),
             Time(logger=logger, timeout=5),
             self.__output_handler,
+            TimeChecker(),
             # Print(logger=ConsoleLogger()),
         ])
 

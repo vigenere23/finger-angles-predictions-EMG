@@ -147,3 +147,17 @@ class ConditionalHandler(DataHandler[ProcessedData[InputType], ProcessedData[Inp
             self.__child.handle(input)
         
         self._next(input)
+
+
+class TimeChecker(DataHandler):
+    def __init__(self):
+        super().__init__()
+        self.__start = datetime.now()
+
+    def handle(self, input: InputType):
+        end = datetime.now()
+        if (end - self.__start).seconds >= 1:
+            self.__start = end
+            print(end.timestamp())
+        
+        self._next(input)
