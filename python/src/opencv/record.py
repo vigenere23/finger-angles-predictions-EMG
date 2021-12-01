@@ -1,6 +1,8 @@
+from datetime import datetime
 import cv2 as cv
 from handDetected import HandDetection
-import time
+import time 
+from datetime import datetime
 import pandas as pd
 import os
 
@@ -54,6 +56,7 @@ class HandRecorder:
     def _detect_hand_while_record(self):
         if self.isRecording:
             succes, image = self.capture.read()
+            image = cv.flip(image, 1)
             self.detection.detect_finger(image, self.hand_side, self.finger)
             mcp_angle, pip_angle, dip_angle = self.detection.get_angles_in_finger(self.finger)
             self._save_hand_angles(mcp_angle, pip_angle, dip_angle)
@@ -63,7 +66,7 @@ class HandRecorder:
             cv.imshow('Hand', image)
 
     def _save_hand_angles(self, mcp_angle, pip_angle, dip_angle):
-        self.angles_recorded['timestamp'].append(time.time())
+        self.angles_recorded['timestamp'].append(datetime.now().timestamp())
         self.angles_recorded['mcp angle'].append(mcp_angle)
         self.angles_recorded['pip angle'].append(pip_angle)
         self.angles_recorded['dip angle'].append(dip_angle)
@@ -78,8 +81,9 @@ class HandRecorder:
         df = pd.DataFrame(self.angles_recorded)
         if not os.path.exists('export'):
             os.makedirs('export')
-        df.to_csv('export/Hand_angles_record.cvs', index=False)
-        pass
+        timesptamp = time.time()
+        name_file = str(f'export/Hand_angles_record{timesptamp}.csv')
+        df.to_csv('export/Hand_angles_record.csv', index=False)
     
     def display_hand_angles_recorded(self):
         df = pd.DataFrame(self.angles_recorded)
