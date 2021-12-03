@@ -16,22 +16,22 @@ class SerialExecutorFactory(ExecutorFactory):
             try:
                 configs = []
                 for config in port.split(':')[1].split('_'):
-                    amp, freq = config.split('-')
+                    amp, freq, offset = config.split('-')
                     configs.append(
                         FrequencyConfig(
                             amplitude=float(amp),
-                            frequency=float(freq))
+                            frequency=float(freq),
+                            offset=float(offset))
                     )
                 self.__source = FrequencySource(configs=configs)
             except KeyError:
-                raise ValueError("format should be 'freq:<amp1-freq1>_<amp2-freq2>_<...>'")
+                raise ValueError("format should be 'freq:<amp1-freq1-offset1>_<amp2-freq2-offset2>_<...>'")
         else:
             self.__source = SerialSource(
                 port=port,
                 baudrate=115200,
                 sync_byte=b'\n',
                 check_byte=b'\xFF',
-                # use_parity=True, TODO parity not working
                 logger=logger,
                 # verbose=True
             )

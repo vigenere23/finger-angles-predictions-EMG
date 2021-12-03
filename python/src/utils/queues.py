@@ -20,7 +20,7 @@ class NamedQueue:
             total = self.maxsize
             logger.log(f'{self.name} : {size}/{total} ({round(size/total*100, 2)}%)')
         else:
-            logger.log(f'{self.name} : {size}/inf')
+            logger.log(f'{self.name} : {size}')
 
 
 class QueuePuttingStrategy(ABC):

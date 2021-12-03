@@ -40,7 +40,7 @@ class RefreshingPlot:
         ax.set_ylabel(self.__y_label)
         ax.set_xlim([0, 1])
         ax.set_ylim([0, 1])
-        ax.legend()
+        ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.07), ncol=len(self.__series))
 
         fig.show()
         plt.pause(0.1)
@@ -98,11 +98,12 @@ class BatchPlotUpdate(PlottingStrategy):
 
 
 class TimedPlotUpdate(PlottingStrategy):
-    def __init__(self, plot: RefreshingPlot, window_size: int, n_ys: int, update_time: float = 1):
+    def __init__(self, plot: RefreshingPlot, window_size: int, n_ys: int, update_time: float = 1, plot_time: bool = False):
         self.__x_history = SizedFifo(size=window_size)
         self.__y_histories = [SizedFifo(size=window_size) for _ in range(n_ys)]
         self.__plot = plot
         self.__update_time = update_time
+        self.__plot_time = plot_time
 
         self.__start = datetime.now()
 
@@ -117,8 +118,7 @@ class TimedPlotUpdate(PlottingStrategy):
             self.__start = datetime.now()
 
             Ys = [y_history.to_list() for y_history in self.__y_histories]
-            # X = self.__x_history.to_list()
-            X = list(range(len(Ys[0])))
+            X = self.__x_history.to_list() if self.__plot_time else list(range(len(Ys[0])))
 
             std_Y = max((np.std(Y) for Y in Ys))
             min_Y = min((np.min(Y) for Y in Ys))
@@ -126,35 +126,3 @@ class TimedPlotUpdate(PlottingStrategy):
 
             self.__plot.resize([np.min(X), np.max(X)], [min_Y - std_Y, max_Y + std_Y])
             self.__plot.set_data(X, Ys)
-
-
-# TODO Not working
-# class FixedTimeUpdate(PlottingStrategy):
-#     def __init__(self, plot: RefreshingPlot, timeout: int, batch_size: int = 5):
-#         self.__plot = plot
-#         self.__timeout = timeout
-#         self.__batch_size = batch_size
-
-#         self.__X = []
-#         self.__Y = []
-#         self.__count = 0
-#         self.__start = datetime.now()
-
-#     def update_plot(self, x: Any, y: Any):
-#         now = datetime.now()
-
-#         if (now - self.__start).seconds >= self.__timeout:
-#             self.__start = now
-
-#             std_Y = np.std(self.__Y)
-#             self.__plot.resize([self.__X[-1], self.__X[-1]+self.__timeout], [np.min(self.__Y) - std_Y, np.max(self.__Y) + std_Y])
-#             self.__X = []
-#             self.__Y = []
-
-#         self.__X.append(x)
-#         self.__Y.append(y)
-#         self.__count += 1
-
-#         if self.__count >= self.__batch_size:
-#             self.__count = 0
-#             self.__plot.set_data(self.__X, self.__Y)
