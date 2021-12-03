@@ -5,8 +5,8 @@ from src.utils.plot import RefreshingPlot, TimedPlotUpdate
 
 
 class PlottingExecutorFactory(ExecutorFactory):
-    def __init__(self, plot: RefreshingPlot, source: DataSource, n_ys: int, window_size: int) -> None:
-        plot_strategy = TimedPlotUpdate(plot=plot, n_ys=n_ys, window_size=window_size, update_time=1)
+    def __init__(self, plot: RefreshingPlot, source: DataSource, n_ys: int, window_size: int, plot_time: bool = False) -> None:
+        plot_strategy = TimedPlotUpdate(plot=plot, n_ys=n_ys, window_size=window_size, update_time=0.5, plot_time=plot_time)
         handler = Plot(strategy=plot_strategy)
 
         self.__executor = FromSourceExecutor(source=source, handler=handler)

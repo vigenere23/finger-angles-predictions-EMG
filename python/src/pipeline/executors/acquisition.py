@@ -10,7 +10,7 @@ from src.pipeline.executors.plotting import PlottingExecutorFactory
 from src.pipeline.executors.processing import ProcessingExecutorFactory
 from src.pipeline.executors.queues import QueuesExecutorFactory
 from src.pipeline.executors.serial import SerialExecutorFactory
-from src.pipeline.filters import NotchDC, NotchFrequency2, NotchFrequencyScipy
+from src.pipeline.filters import NotchDC, NotchFrequencyOnline, NotchFrequencyOffline
 from src.pipeline.handlers import AddToQueue, ConditionalHandler, ChannelSelection, HandlersList, Print
 from src.pipeline.processes import ExecutorProcess, SleepingExecutorProcess
 from src.pipeline.sources import QueueSource
@@ -36,8 +36,7 @@ class AcquisitionExperiment(Executor):
         for config in configs:
             handlers = [
                 NotchDC(R=0.99),
-                NotchFrequencyScipy(frequency=60, sampling_frequency=2500),
-                # NotchFrequency2(BW=5, frequency=60, sampling_frequency=2500),
+                NotchFrequencyOnline(frequency=60, sampling_frequency=2500),
             ]
 
             if config.plot:
@@ -46,7 +45,7 @@ class AcquisitionExperiment(Executor):
 
                 plot = RefreshingPlot(
                     series=['original', 'filtered'],
-                    title=f'UART data from channel {config.channel}',
+                    title=f'Data from channel {config.channel}',
                     x_label='time',
                     y_label='value',
                 )
@@ -54,7 +53,7 @@ class AcquisitionExperiment(Executor):
                     plot=plot,
                     source=QueueSource(queue=queue, strategy=BlockingFetch()),
                     n_ys=2,
-                    window_size=333,
+                    window_size=2000,
                 )
 
                 executor_factories[f'Plot-{config.channel}'] = plotting

@@ -1,10 +1,9 @@
 from datetime import datetime
 import cv2 as cv
-from handDetected import HandDetection
-import time 
-from datetime import datetime
+import time
 import pandas as pd
 import os
+from src.opencv.handDetected import HandDetection
 
 class HandRecorder:
 
@@ -91,4 +90,3 @@ class HandRecorder:
 
     # def _display_hud_info(self, image, ):
     #     cv.putText(image, 'mcp angle: {:.2f}deg'.format(mcp_angle), (10, 70), cv.FONT_HERSHEY_PLAIN, 1, (255, 0, 255), 1)
-

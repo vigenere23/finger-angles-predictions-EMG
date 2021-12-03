@@ -17,6 +17,7 @@ from src.utils.types import OutputType
 class FrequencyConfig:
     amplitude: float
     frequency: float
+    offset: float
 
 
 class DataSource(ABC, Generic[OutputType]):
@@ -69,7 +70,7 @@ class FrequencySource(DataSource[SourceData[bytes]]):
     def __generate(self, t: float) -> bytes:
         data = 0.0
         for config in self.__configs:
-            data += config.amplitude * sin(2.0 * pi * config.frequency * t)
+            data += config.offset + config.amplitude * sin(2.0 * pi * config.frequency * t)
 
         return int(data).to_bytes(2, 'big', signed=True)
 
