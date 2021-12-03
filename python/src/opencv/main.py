@@ -1,7 +1,5 @@
-import numpy as np
-import cv2 as cv
-from finger import INDEX_FINGER
-from record import HandRecorder
+from src.opencv.finger import INDEX_FINGER
+from src.opencv.record import HandRecorder
 
 handRecorder = HandRecorder('Right', INDEX_FINGER)
 # p to stop record
