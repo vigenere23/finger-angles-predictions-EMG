@@ -5,7 +5,8 @@ from typing import Any, Generic, List
 from datetime import datetime
 from queue import Queue
 from dataclasses import replace
-from src.pipeline.data import ProcessedData, SourceData
+from src.pipeline.data import ProcessedData, SourceData, RangeData
+from src.pipeline.types import Animator, CharacteristicsExtractor, Model
 from src.utils.lists import iter_groups
 from src.utils.loggers import Logger
 from src.utils.plot import PlottingStrategy
@@ -160,4 +161,94 @@ class TimeChecker(DataHandler):
             self.__start = end
             print(end.timestamp())
         
+        self._next(input)
+
+
+class FixedAccumulator(DataHandler[ProcessedData[InputType], RangeData[List[InputType]]]):
+    def __init__(self, window_size: int):
+        super().__init__()
+        self.__window_size = window_size
+        self.__buffer = []
+        self.__start: float = None
+
+    def handle(self, input: ProcessedData[InputType]):
+        if len(self.__buffer) == 0:
+            self.__start = input.time
+
+        self.__buffer.append(input)
+
+        if len(self.__buffer) >= self.__window_size:
+            output = RangeData(
+                start = self.__start,
+                end = input.time,
+                data = self.__buffer
+            )
+            self._next(output)
+            self.__buffer = []
+
+
+class TimedAccumulator(DataHandler[ProcessedData[InputType], RangeData[List[InputType]]]):
+    def __init__(self, time_in_seconds: float):
+        super().__init__()
+        self.__time_in_seconds = time_in_seconds
+        self.__buffer = []
+        self.__start: float = None
+
+    def handle(self, input: ProcessedData[InputType]):
+        if len(self.__buffer) == 0:
+            self.__start = input.time
+
+        self.__buffer.append(input)
+
+        if input.time >= self.__start + self.__time_in_seconds:
+            output = RangeData(
+                start = self.__start,
+                end = input.time,
+                data = self.__buffer
+            )
+            self._next(output)
+            self.__buffer = []
+
+
+class ToNumpy(DataHandler[RangeData[InputType], RangeData[np.ndarray]]):
+    def handle(self, input: RangeData[InputType]):
+        self._next(replace(
+            input,
+            data = np.array(input.data)
+        ))
+
+
+class ExtractCharacteristics(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
+    def __init__(self, extractor: CharacteristicsExtractor):
+        super().__init__()
+        self.__extractor = extractor
+    
+    def handle(self, input: RangeData[np.ndarray]):
+        output = self.__extractor.extract(input.data)
+        self._next(replace(
+            input,
+            data = output
+        ))
+
+
+class Predict(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
+    def __init__(self, model: Model):
+        super().__init__()
+        self.__model = model
+
+    def handle(self, input: RangeData[np.ndarray]):
+        output = self.__model.predict(input.data)
+        self._next(replace(
+            input,
+            data = output
+        ))
+
+
+class Animate(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
+    def __init__(self, animator: Animator):
+        super().__init__()
+        self.__animator = animator
+
+    def handle(self, input: RangeData[np.ndarray]):
+        self.__animator.animate(input)
         self._next(input)

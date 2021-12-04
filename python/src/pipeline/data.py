@@ -20,3 +20,10 @@ class ProcessedData(Generic[DataType]):
     channel: int
     original: DataType
     filtered: DataType
+
+
+@dataclass
+class RangeData(Generic[DataType]):
+    start: float
+    end: float
+    data: DataType

@@ -1,0 +1,17 @@
+from src.cli.args import PredictionArgs
+from src.pipeline.executors.prediction_experiment import PredictionExperimentBuilder
+
+
+def run(args: PredictionArgs):
+    builder = PredictionExperimentBuilder()
+    
+    for channel in args.plot:
+        builder.add_plotting_for(channel)
+
+    builder.set_serial_port(serial_port=args.serial_port)
+
+    if args.animate:
+        builder.add_animation()
+
+    experiment = builder.build()
+    experiment.execute()

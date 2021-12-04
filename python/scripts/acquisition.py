@@ -1,8 +1,8 @@
-from src.cli.args import DemoArgs
-from src.pipeline.executors.acquisition import AcquisitionExperimentBuilder
+from src.cli.args import AcquisitionArgs
+from src.pipeline.executors.acquisition_experiment import AcquisitionExperimentBuilder
 
 
-def run(args: DemoArgs):
+def run(args: AcquisitionArgs):
     builder = AcquisitionExperimentBuilder()
     
     for channel in args.plot:
