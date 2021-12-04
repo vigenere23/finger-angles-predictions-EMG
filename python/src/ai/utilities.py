@@ -1,6 +1,8 @@
 from sklearn.metrics import precision_score, recall_score, accuracy_score,confusion_matrix
 from sklearn.model_selection import cross_val_score
 import pandas as pd 
+import numpy as np
+import os
 
 DATA_FOLDER = "data"
 
@@ -20,7 +22,72 @@ def hold_out_evaluation(model, X, y_true):
     print("   Micro rappel (recall) = ", recall_score(y_true, y_pred, average='micro'))
     print("   Micro précision = ", precision_score(y_true, y_pred, average='micro'))
 
-def load_csv_data(file_name)
+def load_csv_data(file_name):
     dirname = DATA_FOLDER
     file_path  = os.path.join(dirname,file_name)
     return pd.read_csv(file_path)
+
+def getMAV(x):
+    '''
+    Computes the Mean Absolute Value (MAV)
+    :param x: EMG signal vector as [1-D numpy array]
+    :return: Mean Absolute Value as [float]
+    '''
+    MAV = np.mean(np.abs(x))
+    return MAV
+
+def getRMS(x):
+    '''
+    Computes the Root Mean Square value (RMS)
+    :param x: EMG signal vector as [1-D numpy array]
+    :return: Root Mean Square value as [float]
+    '''
+    RMS = np.sqrt(np.mean(x**2))
+    return RMS
+
+def getVar(x):
+    '''
+    Computes the Variance of EMG (Var)
+    :param x: EMG signal vector as [1-D numpy array]
+    :return: Variance of EMG as [float]
+    '''
+    N = np.size(x)
+    Var = (1/(N-1))*np.sum(x**2)
+    return Var
+
+def getSD(x):
+    '''
+    Computes the Standard Deviation (SD)
+    :param x: EMG signal vector as [1-D numpy array]
+    :return: Standard Deviation as [float]
+    '''
+    N = np.size(x)
+    xx = np.mean(x)
+    SD = np.sqrt(1/(N-1)*np.sum((x-xx)**2))
+    return SD
+
+def getZC(x, threshold=0):
+    '''
+    Computes the Zero Crossing value (ZC)
+    :param x: EMG signal vector as [1-D numpy array]
+    :return: Zero Crossing value as [float]
+    '''
+    N = np.size(x)
+    ZC=0
+    for i in range(N-1):
+        if (x[i]*x[i+1] < 0) and (np.abs(x[i]-x[i+1]) >= threshold):
+            ZC += 1
+    return ZC
+
+def getSSC(x, threshold=0):
+    '''
+    Computes the Slope Sign Change value (SSC)
+    :param x: EMG signal vector as [1-D numpy array]
+    :return: Slope Sign Change value as [float]
+    '''
+    N = np.size(x)
+    SSC = 0
+    for i in range(1, N-1):
+        if (((x[i] > x[i-1]) and (x[i] > x[i+1])) or ((x[i] < x[i-1]) and (x[i] < x[i+1]))) and ((np.abs(x[i]-x[i+1]) >= threshold) or (np.abs(x[i]-x[i-1]) >= threshold)):
+            SSC += 1
+    return SSC
