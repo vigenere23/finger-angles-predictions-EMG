@@ -6,6 +6,7 @@ from sklearn.linear_model import LinearRegression, ElasticNet
 from python.src.ai.utilities import load_csv_data
 from transform import WindowsTransformer , FeaturesTransform
 import numpy as np
+import pandas as pd
 
 
 def train_k_fold(model,X,y,factor=0.7):
@@ -31,13 +32,18 @@ def train_k_fold(model,X,y,factor=0.7):
     
 
 def make_dataset(X,y):
+    """To adapt to the correct format
+        and align the data depending on the timestamp
+    """
+    start_time_X = 0
+    start_time_y =0
     transformer = WindowsTransformer(windows_size=3,factor=1)
     features_transformer = FeaturesTransform(windows_size=3,factor=1)
-    print(f"original data {fake_data}")
     windowed_data = transformer.transform(X)
     features_data =  features_transformer.transform(windowed_data)
     print(np.array(features_data)[:,0])
-    pass
+    return pd.DataFrame(list(zip(features_data,y)),columns=['X','y'])
+    
 
 
 if __name__=="__main__":
