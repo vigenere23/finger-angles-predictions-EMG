@@ -8,6 +8,9 @@ def run(args: PredictionArgs):
     for channel in args.plot:
         builder.add_plotting_for(channel)
 
+    for channel in args.predict:
+        builder.add_prediction_for(channel)
+
     builder.set_serial_port(serial_port=args.serial_port)
 
     if args.animate:

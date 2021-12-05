@@ -26,4 +26,4 @@ class ProcessedData(Generic[DataType]):
 class RangeData(Generic[DataType]):
     start: float
     end: float
-    data: DataType
+    value: DataType

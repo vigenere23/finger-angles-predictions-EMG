@@ -1,7 +1,7 @@
 from __future__ import annotations
 import numpy as np
 from abc import ABC, abstractmethod
-from typing import Any, Generic, List
+from typing import Any, Dict, Generic, List
 from datetime import datetime
 from queue import Queue
 from dataclasses import replace
@@ -50,12 +50,14 @@ class HandlersList(DataHandler[InputType, OutputType]):
 
 
 class Print(DataHandler[InputType, InputType]):
-    def __init__(self, logger: Logger) -> None:
+    def __init__(self, logger: Logger, mapper = None) -> None:
         super().__init__()
         self.__logger = logger
+        self.__mapper = mapper
 
     def handle(self, input: InputType):
-        self.__logger.log(input)
+        to_log = self.__mapper(input) if self.__mapper else input
+        self.__logger.log(to_log)
         self._next(input)
 
 
@@ -164,24 +166,47 @@ class TimeChecker(DataHandler):
         self._next(input)
 
 
-class FixedAccumulator(DataHandler[ProcessedData[InputType], RangeData[List[InputType]]]):
-    def __init__(self, window_size: int):
+class FixedAccumulator(DataHandler[ProcessedData[InputType], RangeData[InputType]]):
+    def __init__(self, size: int):
         super().__init__()
-        self.__window_size = window_size
-        self.__buffer = []
+        self.__size = size
+        self.__buffer: List[ProcessedData[InputType]] = []
         self.__start: float = None
 
     def handle(self, input: ProcessedData[InputType]):
         if len(self.__buffer) == 0:
             self.__start = input.time
 
-        self.__buffer.append(input)
+        self.__buffer.append(input.filtered)
 
-        if len(self.__buffer) >= self.__window_size:
+        if len(self.__buffer) >= self.__size:
             output = RangeData(
                 start = self.__start,
                 end = input.time,
-                data = self.__buffer
+                value = self.__buffer
+            )
+            self._next(output)
+            self.__buffer = []
+
+
+class FixedRangeAccumulator(DataHandler[RangeData[InputType], RangeData[List[InputType]]]):
+    def __init__(self, size: int):
+        super().__init__()
+        self.__size = size
+        self.__buffer: List[ProcessedData[InputType]] = []
+        self.__start: float = None
+
+    def handle(self, input: RangeData[InputType]):
+        if len(self.__buffer) == 0:
+            self.__start = input.start
+
+        self.__buffer.append(input.value)
+
+        if len(self.__buffer) >= self.__size:
+            output = RangeData(
+                start = self.__start,
+                end = input.end,
+                value = self.__buffer
             )
             self._next(output)
             self.__buffer = []
@@ -198,36 +223,44 @@ class TimedAccumulator(DataHandler[ProcessedData[InputType], RangeData[List[Inpu
         if len(self.__buffer) == 0:
             self.__start = input.time
 
-        self.__buffer.append(input)
+        self.__buffer.append(input.filtered)
 
         if input.time >= self.__start + self.__time_in_seconds:
             output = RangeData(
                 start = self.__start,
                 end = input.time,
-                data = self.__buffer
+                value = self.__buffer
             )
             self._next(output)
             self.__buffer = []
 
 
 class ToNumpy(DataHandler[RangeData[InputType], RangeData[np.ndarray]]):
+    def __init__(self, flatten: bool = False):
+        self.__flatten = flatten
+
     def handle(self, input: RangeData[InputType]):
+        output = np.array(input.value)
+
+        if self.__flatten:
+            output = output.flatten()
+
         self._next(replace(
             input,
-            data = np.array(input.data)
+            value = output
         ))
 
 
-class ExtractCharacteristics(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
+class ExtractCharacteristics(DataHandler[RangeData[List[int]], RangeData[List[float]]]):
     def __init__(self, extractor: CharacteristicsExtractor):
         super().__init__()
         self.__extractor = extractor
     
-    def handle(self, input: RangeData[np.ndarray]):
-        output = self.__extractor.extract(input.data)
+    def handle(self, input: RangeData[List[int]]):
+        output = self.__extractor.extract(input.value, input.start, input.end)
         self._next(replace(
             input,
-            data = output
+            value = output
         ))
 
 
@@ -237,10 +270,10 @@ class Predict(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
         self.__model = model
 
     def handle(self, input: RangeData[np.ndarray]):
-        output = self.__model.predict(input.data)
+        output = self.__model.predict(input.value)
         self._next(replace(
             input,
-            data = output
+            value = output
         ))
 
 

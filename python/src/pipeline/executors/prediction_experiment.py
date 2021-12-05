@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from multiprocessing import Queue
-from typing import Dict, List
+from typing import Dict, List, Optional
 from src.pipeline.executors.base import Executor, ExecutorFactory, ProcessesExecutor
 from src.pipeline.executors.plotting import PlottingExecutorFactory
 from src.pipeline.executors.prediction import PredictionExecutorFactory
@@ -8,10 +8,10 @@ from src.pipeline.executors.processing import ProcessingExecutorFactory
 from src.pipeline.executors.queues import QueuesExecutorFactory
 from src.pipeline.executors.serial import SerialExecutorFactory
 from src.pipeline.filters import NotchDC, NotchFrequencyOnline
-from src.pipeline.handlers import AddToQueue, ConditionalHandler, ChannelSelection, DataHandler, HandlersList, Print
+from src.pipeline.handlers import AddToQueue, ConditionalHandler, ChannelSelection, DataHandler, HandlersList
 from src.pipeline.processes import ExecutorProcess, SleepingExecutorProcess
 from src.pipeline.sources import QueueSource
-from src.pipeline.types import DumbAnimator, DumbExtractor, DumbModel
+from src.pipeline.types import DumbExtractor, DumbModel
 from src.utils.plot import RefreshingPlot
 from src.utils.queues import BlockingFetch, NamedQueue, NonBlockingPut
 
@@ -20,6 +20,7 @@ from src.utils.queues import BlockingFetch, NamedQueue, NonBlockingPut
 class ChannelConfig:
     channel: int
     plot: bool = False
+    predict: bool = False
 
 
 class PredictionExperiment(Executor):
@@ -27,6 +28,7 @@ class PredictionExperiment(Executor):
         executor_factories: Dict[str, ExecutorFactory] = {}
         queues = []
         processing_outputs = []
+        prediction_queue = self.__add_global_prediction(configs, executor_factories, animate=animate)
 
         for config in configs:
             handlers = [
@@ -34,10 +36,11 @@ class PredictionExperiment(Executor):
                 NotchFrequencyOnline(frequency=60, sampling_frequency=2500),
             ]
 
-            self.__add_prediction(config, handlers, queues, executor_factories, animate=animate)
-
             if config.plot:
                 self.__add_plotting(config, handlers, queues, executor_factories)
+
+            if config.predict:
+                self.__add_prediction(prediction_queue, handlers, queues)
 
             handlers_list = HandlersList(handlers)
 
@@ -96,20 +99,30 @@ class PredictionExperiment(Executor):
         executor_factories[f'Plot-{config.channel}'] = plotting
         queues.append(queue)
 
-    def __add_prediction(self, config: ChannelConfig, handlers: List[DataHandler], queues: List[NamedQueue], executor_factories: Dict[str, ExecutorFactory], animate: bool = False):
-        queue = NamedQueue(name=f'plot-{config.channel}', queue=Queue())
+    def __add_prediction(self, queue: NamedQueue, handlers: List[DataHandler], queues: List[NamedQueue]):
         handlers.append(AddToQueue(queue=queue, strategy=NonBlockingPut()))
+        queues.append(queue)
+
+    def __add_global_prediction(self, configs: List[ChannelConfig], executor_factories: Dict[str, ExecutorFactory], animate: bool = False) -> Optional[NamedQueue]:
+        channels = list(map(lambda config: config.channel, filter(lambda config: config.predict, configs)))
+
+        if channels == []:
+            return None
+
+        queue = NamedQueue(name='predictions', queue=Queue())
 
         prediction = PredictionExecutorFactory(
             source=QueueSource(queue=queue, strategy=BlockingFetch()),
-            # TODO choose the real implementations once done
+            channels=channels,
+            # TODO choose the real implementations once completed
             model=DumbModel(),
             extractor=DumbExtractor(),
-            animator=DumbAnimator() if animate else None,
+            animate=animate,
         )
 
         executor_factories['Prediction'] = prediction
-        queues.append(queue)
+
+        return queue
 
     def execute(self):
         self.__executor.execute()
@@ -136,6 +149,11 @@ class PredictionExperimentBuilder:
     def add_plotting_for(self, channel: int):
         config = self.__get_or_create_config(channel)
         config.plot = True
+        self.__save_config(config)
+
+    def add_prediction_for(self, channel: int):
+        config = self.__get_or_create_config(channel)
+        config.predict = True
         self.__save_config(config)
 
     def add_animation(self):
