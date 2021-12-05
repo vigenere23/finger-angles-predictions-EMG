@@ -35,4 +35,4 @@ class DumbExtractor(CharacteristicsExtractor):
 # TODO remove once real implementation done
 class DumbModel(Model):
     def predict(self, X: np.ndarray) -> np.ndarray:
-        return np.array([1, 2, 3])
+        return np.array([1.234234, 2.2342342, 3.234234])

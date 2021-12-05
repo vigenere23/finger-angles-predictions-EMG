@@ -23,7 +23,7 @@ class PredictionExecutorFactory(ExecutorFactory):
             # out_handlers.append(Animate(animator=BaseAnimator()))
             pass
         else:
-            out_handlers.append(Print(logger=logger, mapper=lambda x: x.value))
+            out_handlers.append(Print(logger=logger, mapper=lambda x: x.value.round(decimals=2)))
 
         out_handler = HandlersList(out_handlers)
 

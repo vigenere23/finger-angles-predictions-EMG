@@ -28,7 +28,7 @@ class PredictionExperiment(Executor):
         executor_factories: Dict[str, ExecutorFactory] = {}
         queues = []
         processing_outputs = []
-        prediction_queue = self.__add_global_prediction(configs, executor_factories, animate=animate)
+        prediction_queue = self.__add_global_prediction(configs, queues, executor_factories, animate=animate)
 
         for config in configs:
             handlers = [
@@ -40,7 +40,7 @@ class PredictionExperiment(Executor):
                 self.__add_plotting(config, handlers, queues, executor_factories)
 
             if config.predict:
-                self.__add_prediction(prediction_queue, handlers, queues)
+                self.__add_prediction(prediction_queue, handlers)
 
             handlers_list = HandlersList(handlers)
 
@@ -99,11 +99,10 @@ class PredictionExperiment(Executor):
         executor_factories[f'Plot-{config.channel}'] = plotting
         queues.append(queue)
 
-    def __add_prediction(self, queue: NamedQueue, handlers: List[DataHandler], queues: List[NamedQueue]):
+    def __add_prediction(self, queue: NamedQueue, handlers: List[DataHandler]):
         handlers.append(AddToQueue(queue=queue, strategy=NonBlockingPut()))
-        queues.append(queue)
 
-    def __add_global_prediction(self, configs: List[ChannelConfig], executor_factories: Dict[str, ExecutorFactory], animate: bool = False) -> Optional[NamedQueue]:
+    def __add_global_prediction(self, configs: List[ChannelConfig], queues: List[NamedQueue], executor_factories: Dict[str, ExecutorFactory], animate: bool = False) -> Optional[NamedQueue]:
         channels = list(map(lambda config: config.channel, filter(lambda config: config.predict, configs)))
 
         if channels == []:
@@ -121,6 +120,7 @@ class PredictionExperiment(Executor):
         )
 
         executor_factories['Prediction'] = prediction
+        queues.append(queue)
 
         return queue
 
