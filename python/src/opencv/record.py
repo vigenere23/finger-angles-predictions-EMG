@@ -1,13 +1,13 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import cv2 as cv
-import time
 import pandas as pd
 import os
+from pathlib import Path
 from src.opencv.handDetected import HandDetection
 
 class HandRecorder:
 
-    def __init__(self, hand_side, finger):
+    def __init__(self, hand_side, finger, camera: int):
         self.capture = None
         self.isRecording = False
         self.hand_side = hand_side
@@ -19,11 +19,11 @@ class HandRecorder:
             'pip angle':[],
             'dip angle':[]
         }
+        self.camera = camera
 
-    # end record with p button
     def start_record_hand(self):
         if self.isRecording == False:
-            self.capture = cv.VideoCapture(0)
+            self.capture = cv.VideoCapture(self.camera)
             self.isRecording = True
             while True:
                 if self._end_record_after_click():
@@ -34,11 +34,11 @@ class HandRecorder:
         else : 
             print('Is recording!!')
 
-    def start_record_hand_during(self, seconde):
+    def start_record_hand_during(self, seconds):
         if self.isRecording == False:
-            self.capture = cv.VideoCapture(0)
+            self.capture = cv.VideoCapture(self.camera)
             self.isRecording = True
-            timeout = time.time() + seconde
+            timeout = datetime.now() + timedelta(seconds=seconds)
             while True:
                 self._detect_hand_while_record()
                 if self._end_record_after_click() or self._end_record_after_time(timeout):
@@ -71,18 +71,22 @@ class HandRecorder:
         self.angles_recorded['dip angle'].append(dip_angle)
 
     def _end_record_after_click(self):
-        return  cv.waitKey(1) & 0xFF==ord('p')
+        return cv.waitKey(1) & 0xFF==ord('p')
     
-    def _end_record_after_time(self, timeout):
-        return  time.time() > timeout
+    def _end_record_after_time(self, timeout: datetime):
+        return datetime.now() >= timeout
 
     def export_hand_angles_recorded_to_csv(self):
         df = pd.DataFrame(self.angles_recorded)
-        if not os.path.exists('export'):
-            os.makedirs('export')
-        timesptamp = time.time()
-        name_file = str(f'export/Hand_angles_record{timesptamp}.csv')
-        df.to_csv('export/Hand_angles_record.csv', index=False)
+        
+        root = os.path.join(Path.cwd(), 'data')
+        os.makedirs(root, exist_ok=True)
+
+        timesptamp = datetime.now().timestamp()
+        filename = os.path.join(root, f'angles_{timesptamp}.csv')
+        df.to_csv(filename, index=False)
+
+        print(f'Saved angles to {filename}')
     
     def display_hand_angles_recorded(self):
         df = pd.DataFrame(self.angles_recorded)
