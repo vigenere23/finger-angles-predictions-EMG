@@ -16,8 +16,8 @@ char should_send_data = 0;
 void send_data() {
     should_send_data = 0;
 
-    int data1 = rand(); //get_adc_value(ADC_CHANNEL_0);
-    int data2 = rand(); //get_adc_value(ADC_CHANNEL_1);
+    int data1 = get_adc_value(ADC_CHANNEL_0);
+    int data2 = get_adc_value(ADC_CHANNEL_1);
 
     send_radio_int_data(data1);
     send_radio_int_data(data2);
@@ -30,7 +30,7 @@ int main(void) {
     UNSET(P1OUT, BIT0);
 
     setup_clock(CLOCK_FREQUENCY);
-    setup_timer(CLOCK_FREQUENCY, 2000);
+    setup_timer(CLOCK_FREQUENCY, 2500);
     setup_radio_transmit_mode();
 
     __bis_SR_register(GIE);

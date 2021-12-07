@@ -11,7 +11,7 @@ const long CLOCK_FREQUENCY = 8000000;
 const UARTConfig UART_CONFIG = {
     .sync_byte = '\n',
     .channels = 2,
-    .data_length = 128,
+    .data_length = 64,
     .message_length = 2,
     .check_byte = 0xFF
 };
@@ -19,7 +19,7 @@ const UARTConfig UART_CONFIG = {
 
 char receive_buffer[RADIO_PACKET_LENGTH];
 unsigned char receive_buffer_index = 0;
-int should_receive_data = 0;
+int should_receive_data = 1;
 
 
 void receive_data() {
