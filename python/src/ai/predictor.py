@@ -1,19 +1,10 @@
-from scipy.sparse import data
-from sklearn.model_selection import train_test_split , cross_val_score ,  RepeatedKFold
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import scale
-from sklearn.linear_model import LinearRegression, ElasticNet
-from sklearn.metrics import r2_score
-from sklearn.feature_selection import SelectKBest, RFE, chi2
-from utilities import load_csv_data , load_classifier
-from transform_unique import WindowsTransformer , FeaturesTransformEMG ,FeaturesTransformAngle
-import numpy as np
-import pandas as pd
-import os
+from utilities import load_model
+from src.ai.transform_unique import WindowsTransformer, FeaturesTransformEMG
 import math
 
 CLASSIFIER_NAME  = ""
-classifier = load_classifier(CLASSIFIER_NAME)
+classifier = load_model(CLASSIFIER_NAME)
 
 def predict(X):
 
@@ -37,4 +28,4 @@ def predict(X):
     print(f"classifiers {classifier.__class__.__name__}")
     print("-"*30)
 
-    return predict(dataset)
+    return classifier.predict(dataset)

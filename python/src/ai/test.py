@@ -1,5 +1,6 @@
-from transform import WindowsTransformer , FeaturesTransform
+from src.ai.transform_unique import WindowsTransformer, FeaturesTransform
 import numpy as np
+
 fake_data = np.random.randint(5,size=(8, 2))
 transformer = WindowsTransformer(windows_size=3,factor=1)
 features_transformer = FeaturesTransform(windows_size=3,factor=1)

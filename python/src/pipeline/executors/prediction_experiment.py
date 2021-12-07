@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from multiprocessing import Queue
 from typing import Dict, List, Optional
+from src.ai.transform_unique import FeaturesTransformEMG
 from src.pipeline.executors.base import Executor, ExecutorFactory, ProcessesExecutor
 from src.pipeline.executors.plotting import PlottingExecutorFactory
 from src.pipeline.executors.prediction import PredictionExecutorFactory
@@ -11,9 +12,9 @@ from src.pipeline.filters import NotchDC, NotchFrequencyOnline
 from src.pipeline.handlers import AddToQueue, ConditionalHandler, ChannelSelection, DataHandler, HandlersList
 from src.pipeline.processes import ExecutorProcess, SleepingExecutorProcess
 from src.pipeline.sources import QueueSource
-from src.pipeline.types import DumbExtractor, DumbModel
 from src.utils.plot import RefreshingPlot
 from src.utils.queues import BlockingFetch, NamedQueue, NonBlockingPut
+from src.ai.utilities import load_model
 
 
 @dataclass
@@ -24,11 +25,11 @@ class ChannelConfig:
 
 
 class PredictionExperiment(Executor):
-    def __init__(self, serial_port: str, animate: bool, configs: List[ChannelConfig]):
+    def __init__(self, serial_port: str, animate: bool, model_name: str, configs: List[ChannelConfig]):
         executor_factories: Dict[str, ExecutorFactory] = {}
         queues = []
         processing_outputs = []
-        prediction_queue = self.__add_global_prediction(configs, queues, executor_factories, animate=animate)
+        prediction_queue = self.__add_global_prediction(model_name, configs, queues, executor_factories, animate=animate)
 
         for config in configs:
             handlers = [
@@ -102,7 +103,7 @@ class PredictionExperiment(Executor):
     def __add_prediction(self, queue: NamedQueue, handlers: List[DataHandler]):
         handlers.append(AddToQueue(queue=queue, strategy=NonBlockingPut()))
 
-    def __add_global_prediction(self, configs: List[ChannelConfig], queues: List[NamedQueue], executor_factories: Dict[str, ExecutorFactory], animate: bool = False) -> Optional[NamedQueue]:
+    def __add_global_prediction(self, model_name: str, configs: List[ChannelConfig], queues: List[NamedQueue], executor_factories: Dict[str, ExecutorFactory], animate: bool = False) -> Optional[NamedQueue]:
         channels = list(map(lambda config: config.channel, filter(lambda config: config.predict, configs)))
 
         if channels == []:
@@ -113,9 +114,8 @@ class PredictionExperiment(Executor):
         prediction = PredictionExecutorFactory(
             source=QueueSource(queue=queue, strategy=BlockingFetch()),
             channels=channels,
-            # TODO choose the real implementations once completed
-            model=DumbModel(),
-            extractor=DumbExtractor(),
+            model=load_model(model_name=model_name),
+            extractor=FeaturesTransformEMG(),
             animate=animate,
         )
 
@@ -132,6 +132,7 @@ class PredictionExperimentBuilder:
     def __init__(self):
         self.__serial_port = 'fake'
         self.__animate = False
+        self.__model_name = ''
         self.__channel_configs: Dict[int, ChannelConfig] = {}
 
     def __get_or_create_config(self, channel: int) -> ChannelConfig:
@@ -145,6 +146,9 @@ class PredictionExperimentBuilder:
 
     def set_serial_port(self, serial_port: str):
         self.__serial_port = serial_port
+
+    def set_model_name(self, model_name: str):
+        self.__model_name = model_name
 
     def add_plotting_for(self, channel: int):
         config = self.__get_or_create_config(channel)
@@ -163,5 +167,6 @@ class PredictionExperimentBuilder:
         return PredictionExperiment(
             serial_port=self.__serial_port,
             animate=self.__animate,
+            model_name=self.__model_name,
             configs=self.__channel_configs.values(),
         )

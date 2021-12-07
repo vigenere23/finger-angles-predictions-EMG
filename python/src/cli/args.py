@@ -15,6 +15,7 @@ class AcquisitionArgs(Tap):
 class PredictionArgs(Tap):
     serial_port: str # use 'rand' for random generation, or 'freq:<amp1-freq1-offset1>_<amp2-freq2-offset2>_<...>' for specific frequencies generation
     predict: List[int] = [] # channels to use for prediction
+    model: str # saved model name to use for regression
     plot: List[int] = [] # channels to use for plotting
     animate: bool = False # show animation of predicted angles. If False, will print to console.
 

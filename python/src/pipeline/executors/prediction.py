@@ -13,7 +13,7 @@ class PredictionExecutorFactory(ExecutorFactory):
 
         out_handlers = [
             FixedRangeAccumulator(size=len(channels)),
-            ToNumpy(flatten=True),
+            ToNumpy(),
             Predict(model=model),
             Time(logger=logger, timeout=1),
         ]
@@ -31,10 +31,10 @@ class PredictionExecutorFactory(ExecutorFactory):
 
         for channel in channels:
             channel_handlers = [
-                # TODO choose the right accumulator
-                # FixedAccumulator(size=200),
-                TimedAccumulator[int](time_in_seconds=1/60),
+                TimedAccumulator[int](time_in_seconds=1/10),
+                ToNumpy(to2D=True),
                 ExtractCharacteristics(extractor=extractor),
+                ToNumpy(flatten=True),
                 out_handler
             ]
             handlers.append(ConditionalHandler(condition=ChannelSelection(channel), child=HandlersList(channel_handlers)))

@@ -1,11 +1,13 @@
+from sklearn.base import BaseEstimator, RegressorMixin
 from sklearn.metrics import precision_score, recall_score, accuracy_score,confusion_matrix
 from sklearn.model_selection import cross_val_score
 import pandas as pd 
 import numpy as np
 import os
+from pathlib import Path
 import pickle
 
-DATA_FOLDER = r"python\src\ai\data"
+DATA_FOLDER = os.path.join(Path.cwd(), 'src', 'ai', 'data')
 
 def cross_validation(model, X, y):
     scores = cross_val_score(model, X, y, cv=5)
@@ -23,17 +25,21 @@ def hold_out_evaluation(model, X, y_true):
     print("   Micro rappel (recall) = ", recall_score(y_true, y_pred, average='micro'))
     print("   Micro précision = ", precision_score(y_true, y_pred, average='micro'))
 
-def load_csv_data(file_name, sep=";", delimiter= ";"):
-    dirname = DATA_FOLDER
-    file_path  = os.path.join(dirname,file_name)
-    return pd.read_csv(file_path,delimiter=delimiter)
+def load_csv_data(file_name, delimiter= ";") -> pd.DataFrame:
+    file_path  = os.path.join(DATA_FOLDER, file_name)
+    return pd.read_csv(file_path, delimiter=delimiter)
 
-def load_classifier(file_name):
-    dirname = DATA_FOLDER
-    file_path  = os.path.join(dirname,file_name)
-    with open(file_path,"rb") as f:
-        clf= pickle.load(f)
-    return clf
+def load_model(model_name) -> RegressorMixin:
+    file_path = os.path.join(DATA_FOLDER, f'model_{model_name}')
+    
+    with open(file_path, 'rb') as file:
+        return pickle.load(file)
+
+def save_model(model, model_name: str):
+    file_path = os.path.join(DATA_FOLDER, f'model_{model_name}')
+    
+    with open(file_path, 'wb') as file:
+        pickle.dump(model, file)
 
 def getMAV(x):
     '''

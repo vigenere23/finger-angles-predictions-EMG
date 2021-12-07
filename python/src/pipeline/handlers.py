@@ -236,8 +236,9 @@ class TimedAccumulator(DataHandler[ProcessedData[InputType], RangeData[List[Inpu
 
 
 class ToNumpy(DataHandler[RangeData[InputType], RangeData[np.ndarray]]):
-    def __init__(self, flatten: bool = False):
+    def __init__(self, flatten: bool = False, to2D: bool = False):
         self.__flatten = flatten
+        self.__to2D = False if self.__flatten else to2D
 
     def handle(self, input: RangeData[InputType]):
         output = np.array(input.value)
@@ -245,19 +246,22 @@ class ToNumpy(DataHandler[RangeData[InputType], RangeData[np.ndarray]]):
         if self.__flatten:
             output = output.flatten()
 
+        if self.__to2D:
+            output = np.array([output])
+
         self._next(replace(
             input,
             value = output
         ))
 
 
-class ExtractCharacteristics(DataHandler[RangeData[List[int]], RangeData[List[float]]]):
+class ExtractCharacteristics(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
     def __init__(self, extractor: CharacteristicsExtractor):
         super().__init__()
         self.__extractor = extractor
     
     def handle(self, input: RangeData[List[int]]):
-        output = self.__extractor.extract(input.value, input.start, input.end)
+        output = self.__extractor.extract(input.value)
         self._next(replace(
             input,
             value = output

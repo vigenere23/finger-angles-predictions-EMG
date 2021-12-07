@@ -12,6 +12,7 @@ def run(args: PredictionArgs):
         builder.add_prediction_for(channel)
 
     builder.set_serial_port(serial_port=args.serial_port)
+    builder.set_model_name(args.model)
 
     if args.animate:
         builder.add_animation()
