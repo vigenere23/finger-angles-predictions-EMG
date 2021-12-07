@@ -22,10 +22,10 @@ def hold_out_evaluation(model, X, y_true):
     print("   Micro rappel (recall) = ", recall_score(y_true, y_pred, average='micro'))
     print("   Micro précision = ", precision_score(y_true, y_pred, average='micro'))
 
-def load_csv_data(file_name):
+def load_csv_data(file_name, sep=";", delimiter= ";"):
     dirname = DATA_FOLDER
     file_path  = os.path.join(dirname,file_name)
-    return pd.read_csv(file_path)
+    return pd.read_csv(file_path,delimiter=delimiter)
 
 def getMAV(x):
     '''

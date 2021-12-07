@@ -12,11 +12,14 @@ class WindowsTransformer(BaseEstimator, TransformerMixin):
     def fit(self, X):
         pass
 
-    def transform(self, X):
+    def transform(self, X,**kwargs):
         result=[]
         len_data = X.shape[0]
         n_channel = X.shape[1]
-        n_window = int(len_data/self.windows_size)
+        if "window_size" in kwargs:
+            n_window=kwargs["window_size"]
+        else:
+            n_window = int(len_data/self.windows_size)
         #each window correspond to an example
         data_windows_ch0 = [X[:,0][w*self.windows_size:w*self.windows_size+self.windows_size] for w in range(n_window)]
         data_windows_ch1 = [X[:,1][w*self.windows_size:w*self.windows_size+self.windows_size] for w in range(n_window)]
