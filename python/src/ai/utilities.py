@@ -3,8 +3,9 @@ from sklearn.model_selection import cross_val_score
 import pandas as pd 
 import numpy as np
 import os
+import pickle
 
-DATA_FOLDER = "data"
+DATA_FOLDER = r"python\src\ai\data"
 
 def cross_validation(model, X, y):
     scores = cross_val_score(model, X, y, cv=5)
@@ -26,6 +27,13 @@ def load_csv_data(file_name, sep=";", delimiter= ";"):
     dirname = DATA_FOLDER
     file_path  = os.path.join(dirname,file_name)
     return pd.read_csv(file_path,delimiter=delimiter)
+
+def load_classifier(file_name):
+    dirname = DATA_FOLDER
+    file_path  = os.path.join(dirname,file_name)
+    with open(file_path,"rb") as f:
+        clf= pickle.load(f)
+    return clf
 
 def getMAV(x):
     '''
