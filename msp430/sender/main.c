@@ -31,6 +31,7 @@ int main(void) {
 
     setup_clock(CLOCK_FREQUENCY);
     setup_timer(CLOCK_FREQUENCY, 2500);
+    setup_adc();
     setup_radio_transmit_mode();
 
     __bis_SR_register(GIE);
