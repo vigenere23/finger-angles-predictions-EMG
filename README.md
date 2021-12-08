@@ -7,6 +7,6 @@
 
 ## Collaborators
 
-- Gabriel St-Pierre ([@vigenere23](https://github.com/vigenere23))
-- Emmanuel N'Goran ([@EmmanuelNGoran](https://github.com/EmmanuelNGoran))
-- Auguste Aka Tiemele ([@Junior Tiemele](https://github.com/xx-code))
+- Gab St-Pierre ([@vigenere23](https://github.com/vigenere23)) [main pipeline]
+- Emmanuel N'Goran ([@EmmanuelNGoran](https://github.com/EmmanuelNGoran)) [ai]
+- Auguste Aka Tiemele ([@Junior Tiemele](https://github.com/xx-code)) [fingers detection]
