@@ -1,9 +1,9 @@
-# biomed-a21
+# Finger angles predictions from EMG and camera-based ground-truth
 
 ## Projects
 
-- [MSP-430](./msp430)
-- [Python](./python)
+- [MSP-430](./msp430) (embedded micro-controller)
+- [Python](./python) (main pipeline)
 
 ## Collaborators
 
