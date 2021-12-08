@@ -1,6 +1,6 @@
 [⬅ BACK](../README.md)
 
-# biomed-a21 - MSP-430
+# MSP-430
 
 ## Troubleshooting
 
