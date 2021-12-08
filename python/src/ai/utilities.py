@@ -1,5 +1,5 @@
-from sklearn.base import BaseEstimator, RegressorMixin
-from sklearn.metrics import precision_score, recall_score, accuracy_score,confusion_matrix
+from sklearn.base import RegressorMixin
+from sklearn.metrics import precision_score, recall_score, accuracy_score
 from sklearn.model_selection import cross_val_score
 import pandas as pd 
 import numpy as np
@@ -7,7 +7,8 @@ import os
 from pathlib import Path
 import pickle
 
-DATA_FOLDER = os.path.join(Path.cwd(), 'src', 'ai', 'data')
+DATA_FOLDER = os.path.join(Path.cwd(), 'data')
+MODELS_FOLDER = os.path.join(Path.cwd(), 'src', 'ai', 'models')
 
 def cross_validation(model, X, y):
     scores = cross_val_score(model, X, y, cv=5)
@@ -30,13 +31,13 @@ def load_csv_data(file_name, delimiter= ";") -> pd.DataFrame:
     return pd.read_csv(file_path, delimiter=delimiter)
 
 def load_model(model_name) -> RegressorMixin:
-    file_path = os.path.join(DATA_FOLDER, f'model_{model_name}')
+    file_path = os.path.join(MODELS_FOLDER, f'model_{model_name}')
     
     with open(file_path, 'rb') as file:
         return pickle.load(file)
 
 def save_model(model, model_name: str):
-    file_path = os.path.join(DATA_FOLDER, f'model_{model_name}')
+    file_path = os.path.join(MODELS_FOLDER, f'model_{model_name}')
     
     with open(file_path, 'wb') as file:
         pickle.dump(model, file)

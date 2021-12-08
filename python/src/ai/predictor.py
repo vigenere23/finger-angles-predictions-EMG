@@ -1,7 +1,7 @@
 from sklearn.preprocessing import scale
 from utilities import load_model
-from src.ai.transform_unique import WindowsTransformer, FeaturesTransformEMG
 import math
+from src.ai.transform_unique import WindowsTransformer, FeaturesTransformEMG
 
 CLASSIFIER_NAME  = ""
 classifier = load_model(CLASSIFIER_NAME)

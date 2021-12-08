@@ -28,19 +28,13 @@ def train_k_fold(model,X,y,factor=0.7):
 
     avgScore = sum(avgScoreTemp)/len(avgScoreTemp)
     print('Mean score with k-fold validation: {}'.format(avgScore))
-    
-
-    
-
-def predict_regression(X, y):
-    pass
 
 
 def main():
-    file_name_hand_angle= "Hand_angles_record_3.csv"
+    file_path_angles = os.path.join('acq-3', 'angles.csv')
     file_path_emg = os.path.join('acq-3', 'emg-0.csv')
-    data_emg  = load_csv_data(file_name=file_path_emg)
-    data_hand_angle  = load_csv_data(file_name=file_name_hand_angle, delimiter=",")
+    data_emg = load_csv_data(file_name=file_path_emg)
+    data_hand_angle = load_csv_data(file_name=file_path_angles, delimiter=",")
 
     #time for training data slice
     start = data_hand_angle.timestamp.min()
