@@ -1,6 +1,6 @@
 [⬅ BACK](../README.md)
 
-# biomed-a21 - Python
+# Python
 
 ## Setup
 
