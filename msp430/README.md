@@ -32,5 +32,5 @@
     4. Go to `Build > MSP430 Compiler > Include Options`, double click on the `${PROJECT_ROOT}` entry and modify it to add the `/include` subfolder to the path.
     5. On the same page, also add the `shared/include` folder.
     6. Go to `Build > MSP430 Linker > File Search Path`. Click the add icon in the `Include library file o...` section, click `Workspace` and select `shared > Debug > shared.lib`.
-        1. ⚠️**If the file does not exist, you will have to first build the project (to trigger the `shared` project build). Make sure to Save the settings before. If import error occurs, you can ignore them for now.**⚠️
+        1. ⚠️ **If the file does not exist, you will have to first build the project (to trigger the `shared` project build). Make sure to Save the settings before. If import error occurs, you can ignore them for now.** ⚠️
     7. Apply changes and close
