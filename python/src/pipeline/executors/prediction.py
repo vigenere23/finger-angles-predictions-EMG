@@ -16,7 +16,7 @@ from src.pipeline.handlers import (
     ToNumpy,
 )
 from src.pipeline.sources import DataSource
-from src.pipeline.types import CharacteristicsExtractor, Model
+from src.pipeline.types import CharacteristicsExtractor, PredictionModel
 from src.utils.loggers import ConsoleLogger
 
 
@@ -26,7 +26,7 @@ class PredictionExecutorFactory(ExecutorFactory):
         source: DataSource[ProcessedData[int]],
         channels: List[int],
         extractor: CharacteristicsExtractor,
-        model: Model,
+        model: PredictionModel,
         animate: bool = None,
     ) -> None:
         logger = ConsoleLogger(prefix="[prediction]")

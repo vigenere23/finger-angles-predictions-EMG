@@ -8,8 +8,8 @@ from typing import Any, Dict, Generic, List
 
 import numpy as np
 
-from src.pipeline.data import ProcessedData, RangeData, SourceData
-from src.pipeline.types import Animator, CharacteristicsExtractor, Model
+from src.pipeline.data import ProcessedData, RangeData, SerialData
+from src.pipeline.types import Animator, CharacteristicsExtractor, PredictionModel
 from src.utils.lists import iter_groups
 from src.utils.loggers import Logger
 from src.utils.plot import PlottingStrategy
@@ -64,8 +64,8 @@ class Print(DataHandler[InputType, InputType]):
         self._next(input)
 
 
-class ProcessFromUART(DataHandler[SourceData[bytes], ProcessedData[bytes]]):
-    def handle(self, input: SourceData[bytes]):
+class ProcessFromUART(DataHandler[SerialData[bytes], ProcessedData[bytes]]):
+    def handle(self, input: SerialData[bytes]):
         channel = 0
         timestamps = np.linspace(
             input.start.timestamp(),
@@ -266,7 +266,7 @@ class ExtractCharacteristics(DataHandler[RangeData[np.ndarray], RangeData[np.nda
 
 
 class Predict(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
-    def __init__(self, model: Model):
+    def __init__(self, model: PredictionModel):
         super().__init__()
         self.__model = model
 

@@ -6,7 +6,7 @@ DataType = TypeVar("DataType")
 
 
 @dataclass
-class SourceData(Generic[DataType]):
+class SerialData(Generic[DataType]):
     value: DataType
     start: datetime
     end: datetime
