@@ -1,5 +1,10 @@
 #!/bin/sh
 
+echo "Checking formatting with black..."
 black --check .
+
+echo "Checking formatting with flake8..."
 poetry run flake8 .
-poetry run mypy .
+
+echo "Checking typing with mypy..."
+poetry run mypy

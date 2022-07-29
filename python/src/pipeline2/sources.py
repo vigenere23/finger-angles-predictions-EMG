@@ -63,10 +63,11 @@ class FrequencySource(Source[SerialData[bytes]]):
         self.__configs = configs
 
         self.__sample_dt = timedelta(seconds=1 / self.__sample_rate)
-        self.__sleep_dt = timedelta(
-            seconds=(self.__data_length + 5)
-            / (self.__sample_rate * 2 * self.__nb_channels)
+
+        sleep_seconds = (self.__data_length + 5) / (
+            self.__sample_rate * 2 * self.__nb_channels
         )
+        self.__sleep_dt = timedelta(seconds=sleep_seconds)
         self.__start = datetime.now()
 
     def __generate(self, t: float) -> bytes:
