@@ -78,8 +78,10 @@ class BatchPlotUpdate(PlottingStrategy):
         self, plot: RefreshingPlot, window_size: int, batch_size: int, n_ys: int
     ):
         self.__batch_size = batch_size
-        self.__x_history = SizedFifo(size=window_size)
-        self.__y_histories = [SizedFifo(size=window_size) for _ in range(n_ys)]
+        self.__x_history = SizedFifo(size=window_size, null_value=0)
+        self.__y_histories = [
+            SizedFifo(size=window_size, null_value=0) for _ in range(n_ys)
+        ]
         self.__count = 0
         self.__plot = plot
 
@@ -95,11 +97,11 @@ class BatchPlotUpdate(PlottingStrategy):
             X = self.__x_history.to_list()
             Ys = [y_history.to_list() for y_history in self.__y_histories]
 
-            std_Y = max((np.std(Y) for Y in Ys))
-            min_Y = min((np.min(Y) for Y in Ys))
-            max_Y = max((np.max(Y) for Y in Ys))
+            std_Y: float = max((np.std(Y) for Y in Ys))
+            min_Y: float = min((np.min(Y) for Y in Ys))
+            max_Y: float = max((np.max(Y) for Y in Ys))
 
-            self.__plot.resize([np.min(X), np.max(X)], [min_Y - std_Y, max_Y + std_Y])
+            self.__plot.resize((np.min(X), np.max(X)), (min_Y - std_Y, max_Y + std_Y))
             self.__plot.set_data(X, Ys)
 
 
@@ -112,8 +114,10 @@ class TimedPlotUpdate(PlottingStrategy):
         update_time: float = 1,
         plot_time: bool = False,
     ):
-        self.__x_history = SizedFifo(size=window_size)
-        self.__y_histories = [SizedFifo(size=window_size) for _ in range(n_ys)]
+        self.__x_history = SizedFifo(size=window_size, null_value=0)
+        self.__y_histories = [
+            SizedFifo(size=window_size, null_value=0) for _ in range(n_ys)
+        ]
         self.__plot = plot
         self.__update_time = update_time
         self.__plot_time = plot_time

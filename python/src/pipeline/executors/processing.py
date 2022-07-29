@@ -7,7 +7,6 @@ from src.pipeline.executors.base import (
 from src.pipeline.handlers import (
     DataHandler,
     HandlersList,
-    Print,
     ProcessFromUART,
     Time,
     TimeChecker,
