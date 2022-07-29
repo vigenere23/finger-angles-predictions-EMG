@@ -4,7 +4,7 @@ from src.pipeline.executors.prediction_experiment import PredictionExperimentBui
 
 def run(args: PredictionArgs):
     builder = PredictionExperimentBuilder()
-    
+
     for channel in args.plot:
         builder.add_plotting_for(channel)
 

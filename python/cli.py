@@ -1,23 +1,37 @@
-from tap import Tap
 from enum import Enum
-from scripts import acquisition, speed_test, prediction, detection
+
+from tap import Tap
+
+from scripts import acquisition, detection, prediction, speed_test
 from src.cli.args import AcquisitionArgs, DetectionArgs, PredictionArgs, SpeedTestArgs
 
 
 class Commands(Enum):
-    ACQUISITION = 'acquisition'
-    PREDICTION = 'prediction'
-    DETECTION = 'detection'
-    SPEED_TEST = 'speed_test'
+    ACQUISITION = "acquisition"
+    PREDICTION = "prediction"
+    DETECTION = "detection"
+    SPEED_TEST = "speed_test"
 
 
 class Args(Tap):
     def configure(self) -> None:
-        self.add_subparsers(dest='command')
-        self.add_subparser(Commands.ACQUISITION.value, AcquisitionArgs, help='Data acquisition for training')
-        self.add_subparser(Commands.PREDICTION.value, PredictionArgs, help='Realtime angles prediction')
-        self.add_subparser(Commands.DETECTION.value, DetectionArgs, help='Detect finger angles using camera')
-        self.add_subparser(Commands.SPEED_TEST.value, SpeedTestArgs, help='Acquisition speed test')
+        self.add_subparsers(dest="command")
+        self.add_subparser(
+            Commands.ACQUISITION.value,
+            AcquisitionArgs,
+            help="Data acquisition for training",
+        )
+        self.add_subparser(
+            Commands.PREDICTION.value, PredictionArgs, help="Realtime angles prediction"
+        )
+        self.add_subparser(
+            Commands.DETECTION.value,
+            DetectionArgs,
+            help="Detect finger angles using camera",
+        )
+        self.add_subparser(
+            Commands.SPEED_TEST.value, SpeedTestArgs, help="Acquisition speed test"
+        )
 
 
 args = Args().parse_args()

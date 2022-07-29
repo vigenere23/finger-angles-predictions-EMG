@@ -1,0 +1,43 @@
+name: Build
+
+on: [push]
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install Poetry
+        uses: Gr1N/setup-poetry@v7
+
+      - name: Setup Poetry cache
+        uses: actions/cache@v1
+        id: poetry
+        with:
+          path: ~/.virtualenvs
+          key: poetry-${{ hashFiles('./python/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ hashFiles('./python/poetry.lock') }}
+
+      - name: Configure Poetry
+        run: |
+          poetry config virtualenvs.in-project false
+          poetry config virtualenvs.path ~/.virtualenvs
+
+      - name: Install dependencies
+        run: poetry install
+        working-directory: python
+
+      - name: Lint
+        run: ./ci/lint
+        working-directory: python
+
+      - name: Test
+        run: ./ci/test
+        working-directory: python

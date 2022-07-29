@@ -1,8 +1,9 @@
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Any, Union, Generic
 import multiprocessing
 import queue
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Any, Generic, Union
+
 from src.utils.loggers import Logger
 from src.utils.types import OutputType
 
@@ -18,9 +19,9 @@ class NamedQueue:
 
         if self.maxsize:
             total = self.maxsize
-            logger.log(f'{self.name} : {size}/{total} ({round(size/total*100, 2)}%)')
+            logger.log(f"{self.name} : {size}/{total} ({round(size/total*100, 2)}%)")
         else:
-            logger.log(f'{self.name} : {size}')
+            logger.log(f"{self.name} : {size}")
 
 
 class QueuePuttingStrategy(ABC):
@@ -42,7 +43,6 @@ class BlockingPut(QueuePuttingStrategy):
         queue.queue.put(data, block=True, timeout=self.__timeout)
 
 
-
 class QueueFetchingStrategy(ABC, Generic[OutputType]):
     @abstractmethod
     def get(self, queue: NamedQueue) -> OutputType:
@@ -54,4 +54,4 @@ class BlockingFetch(QueueFetchingStrategy[OutputType]):
         self.__timeout = timeout
 
     def get(self, queue: NamedQueue) -> OutputType:
-        return queue.queue.get(block = True, timeout = self.__timeout)
+        return queue.queue.get(block=True, timeout=self.__timeout)

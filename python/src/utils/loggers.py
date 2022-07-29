@@ -8,8 +8,8 @@ class Logger(ABC):
 
 
 class ConsoleLogger(Logger):
-    def __init__(self, prefix: str = '') -> None:
+    def __init__(self, prefix: str = "") -> None:
         self.__prefix = prefix
 
     def log(self, message: str) -> None:
-        print(f'{self.__prefix} {message}')
+        print(f"{self.__prefix} {message}")

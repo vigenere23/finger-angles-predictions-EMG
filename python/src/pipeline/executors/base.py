@@ -3,8 +3,9 @@ from abc import ABC, abstractmethod
 from multiprocessing.context import Process
 from threading import Thread
 from typing import List
-from src.pipeline.sources import DataSource
+
 from src.pipeline.handlers import DataHandler
+from src.pipeline.sources import DataSource
 
 
 class Executor(ABC):
@@ -43,11 +44,11 @@ class Retryer(Executor):
                 failed = False
                 break
             except Exception as e:
-                print(f'### Exception ({e.__class__}) : {e}')
+                print(f"### Exception ({e.__class__}) : {e}")
                 print(traceback.format_exc())
 
         if failed:
-            raise RuntimeError('Maximum number of retries exceeded')
+            raise RuntimeError("Maximum number of retries exceeded")
 
 
 class LoopExecutor(Executor):
@@ -80,4 +81,4 @@ class ProcessesExecutor(Executor):
     def execute(self):
         for process in self.__processes:
             process.start()
-            print(f'Started > {process.name}')
+            print(f"Started > {process.name}")

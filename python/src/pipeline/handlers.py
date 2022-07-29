@@ -1,17 +1,20 @@
 from __future__ import annotations
-import numpy as np
+
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Generic, List
+from dataclasses import replace
 from datetime import datetime
 from queue import Queue
-from dataclasses import replace
-from src.pipeline.data import ProcessedData, SourceData, RangeData
+from typing import Any, Dict, Generic, List
+
+import numpy as np
+
+from src.pipeline.data import ProcessedData, RangeData, SourceData
 from src.pipeline.types import Animator, CharacteristicsExtractor, Model
 from src.utils.lists import iter_groups
 from src.utils.loggers import Logger
 from src.utils.plot import PlottingStrategy
+from src.utils.queues import NamedQueue, QueuePuttingStrategy
 from src.utils.types import InputType, OutputType
-from src.utils.queues import QueuePuttingStrategy
 
 
 class DataHandler(ABC, Generic[InputType, OutputType]):
@@ -35,11 +38,11 @@ class HandlersList(DataHandler[InputType, OutputType]):
         super().__init__()
 
         for i in range(len(handlers) - 1):
-            handlers[i].set_next(handlers[i+1])
+            handlers[i].set_next(handlers[i + 1])
 
         self.__head = handlers[0]
         self.__tail = handlers[-1]
-    
+
     def add_next(self, next: DataHandler):
         self.__tail.set_next(next)
         self.__tail = next
@@ -50,7 +53,7 @@ class HandlersList(DataHandler[InputType, OutputType]):
 
 
 class Print(DataHandler[InputType, InputType]):
-    def __init__(self, logger: Logger, mapper = None) -> None:
+    def __init__(self, logger: Logger, mapper=None) -> None:
         super().__init__()
         self.__logger = logger
         self.__mapper = mapper
@@ -64,27 +67,33 @@ class Print(DataHandler[InputType, InputType]):
 class ProcessFromUART(DataHandler[SourceData[bytes], ProcessedData[bytes]]):
     def handle(self, input: SourceData[bytes]):
         channel = 0
-        timestamps = np.linspace(input.start.timestamp(), input.end.timestamp(), input.length // input.message_length)
+        timestamps = np.linspace(
+            input.start.timestamp(),
+            input.end.timestamp(),
+            input.length // input.message_length,
+        )
         data_groups = iter_groups(input.value, input.message_length)
 
         for timestamp, message in zip(timestamps, data_groups):
-            self._next(ProcessedData(
-                time=timestamp,
-                channel=channel,
-                original=message,
-                filtered=message,
-            ))
+            self._next(
+                ProcessedData(
+                    time=timestamp,
+                    channel=channel,
+                    original=message,
+                    filtered=message,
+                )
+            )
             channel = (channel + 1) % input.nb_channels
 
 
 class ToInt(DataHandler[ProcessedData[bytes], ProcessedData[int]]):
     def handle(self, input: ProcessedData[bytes]):
-        new_value = int.from_bytes(bytearray(input.original), 'big', signed=True)
+        new_value = int.from_bytes(bytearray(input.original), "big", signed=True)
         self._next(replace(input, original=new_value, filtered=new_value))
 
 
 class AddToQueue(DataHandler[InputType, InputType]):
-    def __init__(self, queue: Queue, strategy: QueuePuttingStrategy) -> None:
+    def __init__(self, queue: NamedQueue, strategy: QueuePuttingStrategy) -> None:
         super().__init__()
         self.__queue = queue
         self.__strategy = strategy
@@ -107,7 +116,7 @@ class Time(DataHandler[InputType, InputType]):
         self.__count += 1
 
         if (now - self.__start).seconds >= self.__timeout:
-            self.__logger.log(f'Rate : {round(self.__count/self.__timeout, 2)} / s')
+            self.__logger.log(f"Rate : {round(self.__count/self.__timeout, 2)} / s")
             self.__count = 0
             self.__start = now
 
@@ -139,7 +148,9 @@ class ChannelSelection(Condition[ProcessedData]):
         return item.channel == self.__channel
 
 
-class ConditionalHandler(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
+class ConditionalHandler(
+    DataHandler[ProcessedData[InputType], ProcessedData[InputType]]
+):
     def __init__(self, condition: Condition, child: DataHandler) -> None:
         super().__init__()
         self.__condition = condition
@@ -148,7 +159,7 @@ class ConditionalHandler(DataHandler[ProcessedData[InputType], ProcessedData[Inp
     def handle(self, input: InputType):
         if self.__condition.check(input):
             self.__child.handle(input)
-        
+
         self._next(input)
 
 
@@ -162,7 +173,7 @@ class TimeChecker(DataHandler):
         if (end - self.__start).seconds >= 1:
             self.__start = end
             print(end.timestamp())
-        
+
         self._next(input)
 
 
@@ -180,16 +191,14 @@ class FixedAccumulator(DataHandler[ProcessedData[InputType], RangeData[InputType
         self.__buffer.append(input.filtered)
 
         if len(self.__buffer) >= self.__size:
-            output = RangeData(
-                start = self.__start,
-                end = input.time,
-                value = self.__buffer
-            )
+            output = RangeData(start=self.__start, end=input.time, value=self.__buffer)
             self._next(output)
             self.__buffer = []
 
 
-class FixedRangeAccumulator(DataHandler[RangeData[InputType], RangeData[List[InputType]]]):
+class FixedRangeAccumulator(
+    DataHandler[RangeData[InputType], RangeData[List[InputType]]]
+):
     def __init__(self, size: int):
         super().__init__()
         self.__size = size
@@ -203,16 +212,14 @@ class FixedRangeAccumulator(DataHandler[RangeData[InputType], RangeData[List[Inp
         self.__buffer.append(input.value)
 
         if len(self.__buffer) >= self.__size:
-            output = RangeData(
-                start = self.__start,
-                end = input.end,
-                value = self.__buffer
-            )
+            output = RangeData(start=self.__start, end=input.end, value=self.__buffer)
             self._next(output)
             self.__buffer = []
 
 
-class TimedAccumulator(DataHandler[ProcessedData[InputType], RangeData[List[InputType]]]):
+class TimedAccumulator(
+    DataHandler[ProcessedData[InputType], RangeData[List[InputType]]]
+):
     def __init__(self, time_in_seconds: float):
         super().__init__()
         self.__time_in_seconds = time_in_seconds
@@ -226,11 +233,7 @@ class TimedAccumulator(DataHandler[ProcessedData[InputType], RangeData[List[Inpu
         self.__buffer.append(input.filtered)
 
         if input.time >= self.__start + self.__time_in_seconds:
-            output = RangeData(
-                start = self.__start,
-                end = input.time,
-                value = self.__buffer
-            )
+            output = RangeData(start=self.__start, end=input.time, value=self.__buffer)
             self._next(output)
             self.__buffer = []
 
@@ -249,23 +252,17 @@ class ToNumpy(DataHandler[RangeData[InputType], RangeData[np.ndarray]]):
         if self.__to2D:
             output = np.array([output])
 
-        self._next(replace(
-            input,
-            value = output
-        ))
+        self._next(replace(input, value=output))
 
 
 class ExtractCharacteristics(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
     def __init__(self, extractor: CharacteristicsExtractor):
         super().__init__()
         self.__extractor = extractor
-    
+
     def handle(self, input: RangeData[List[int]]):
         output = self.__extractor.extract(input.value)
-        self._next(replace(
-            input,
-            value = output
-        ))
+        self._next(replace(input, value=output))
 
 
 class Predict(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
@@ -275,10 +272,7 @@ class Predict(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
 
     def handle(self, input: RangeData[np.ndarray]):
         output = self.__model.predict(input.value)
-        self._next(replace(
-            input,
-            value = output
-        ))
+        self._next(replace(input, value=output))
 
 
 class Animate(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
