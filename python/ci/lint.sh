@@ -1,7 +1,7 @@
 #!/bin/sh
 
 echo "Checking formatting with black..."
-black --check .
+poetry run black --check .
 
 echo "Checking formatting with flake8..."
 poetry run flake8 .

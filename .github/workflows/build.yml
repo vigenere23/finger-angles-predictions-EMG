@@ -35,9 +35,9 @@ jobs:
         working-directory: python
 
       - name: Lint
-        run: ./ci/lint
+        run: ./ci/lint.sh
         working-directory: python
 
       - name: Test
-        run: ./ci/test
+        run: ./ci/test.sh
         working-directory: python
