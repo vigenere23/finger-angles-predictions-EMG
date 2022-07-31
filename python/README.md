@@ -4,11 +4,7 @@
 
 ## Setup
 
-### Creating a virtual env
-
-1. Create the venv : `python -m venv .venv`
-2. Source the venv : `source .venv/bin/activate`
-3. Install dependencies : `pip install -r requirements.txt`
+This Python project uses `poetry`.
 
 ## Running
 
