@@ -15,7 +15,7 @@ pyserial = "^3.5"
 scikit-learn = "^1.1.1"
 typed-argument-parser = "^1.7.2"
 scipy = "^1.8.1"
-modupipe = "0.2.0"
+modupipe = "^0.2"
 
 [tool.poetry.dev-dependencies]
 isort = "^5.10.1"
