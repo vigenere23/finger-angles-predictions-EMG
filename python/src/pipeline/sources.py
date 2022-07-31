@@ -1,12 +1,14 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from serial import Serial
 from math import pi, sin
 from random import randint
 from time import sleep
-from abc import ABC, abstractmethod
-from typing import Iterator, Generic, List
+from typing import Generic, Iterator, List
+
+from serial import Serial
 from serial.serialutil import PARITY_NONE, PARITY_ODD
+
 from src.pipeline.data import SourceData
 from src.utils.loggers import Logger
 from src.utils.queues import NamedQueue, QueueFetchingStrategy
@@ -36,18 +38,18 @@ class RandomSource(DataSource[SourceData[bytes]]):
         self.__start = datetime.now()
 
     def __generate(self) -> bytes:
-        return randint(-4000, 4000).to_bytes(2, 'big', signed=True)
+        return randint(-4000, 4000).to_bytes(2, "big", signed=True)
 
     def get(self) -> Iterator[SourceData[bytes]]:
         end = self.__start + self.__dt
 
         yield SourceData(
-            value=b''.join((self.__generate() for _ in range(self.__data_length))),
+            value=b"".join((self.__generate() for _ in range(self.__data_length))),
             start=self.__start,
             end=end,
             length=self.__data_length,
             message_length=self.__message_length,
-            nb_channels=self.__nb_channels
+            nb_channels=self.__nb_channels,
         )
 
         self.__start = end
@@ -63,16 +65,21 @@ class FrequencySource(DataSource[SourceData[bytes]]):
         self.__sample_rate = 2500
         self.__configs = configs
 
-        self.__sample_dt = timedelta(seconds=1/self.__sample_rate)
-        self.__sleep_dt = timedelta(seconds=(self.__data_length+5)/(self.__sample_rate*2*self.__nb_channels))
+        self.__sample_dt = timedelta(seconds=1 / self.__sample_rate)
+        self.__sleep_dt = timedelta(
+            seconds=(self.__data_length + 5)
+            / (self.__sample_rate * 2 * self.__nb_channels)
+        )
         self.__start = datetime.now()
 
     def __generate(self, t: float) -> bytes:
         data = 0.0
         for config in self.__configs:
-            data += config.offset + config.amplitude * sin(2.0 * pi * config.frequency * t)
+            data += config.offset + config.amplitude * sin(
+                2.0 * pi * config.frequency * t
+            )
 
-        return int(data).to_bytes(2, 'big', signed=True)
+        return int(data).to_bytes(2, "big", signed=True)
 
     def get(self) -> Iterator[SourceData[bytes]]:
         delay_start = datetime.now()
@@ -84,7 +91,7 @@ class FrequencySource(DataSource[SourceData[bytes]]):
             data.extend((value for _ in range(self.__nb_channels)))
             end += self.__sample_dt
 
-        data = b''.join(data)
+        data = b"".join(data)
 
         yield SourceData(
             value=data,
@@ -92,7 +99,7 @@ class FrequencySource(DataSource[SourceData[bytes]]):
             end=end - self.__sample_dt,
             length=self.__data_length,
             message_length=self.__message_length,
-            nb_channels=self.__nb_channels
+            nb_channels=self.__nb_channels,
         )
 
         self.__start = end
@@ -102,13 +109,22 @@ class FrequencySource(DataSource[SourceData[bytes]]):
 
 
 class SerialSource(DataSource[SourceData[bytes]]):
-    def __init__(self, port: str, baudrate: int, sync_byte: bytes, check_byte: bytes, logger: Logger, use_parity: bool = False, verbose: bool = False):
+    def __init__(
+        self,
+        port: str,
+        baudrate: int,
+        sync_byte: bytes,
+        check_byte: bytes,
+        logger: Logger,
+        use_parity: bool = False,
+        verbose: bool = False,
+    ):
         parity = PARITY_ODD if use_parity else PARITY_NONE
         serial = Serial(port=port, baudrate=baudrate, parity=parity)
 
         serial.reset_input_buffer()
         serial.reset_output_buffer()
-        
+
         if serial.in_waiting:
             serial.read(serial.in_waiting)
 
@@ -134,12 +150,14 @@ class SerialSource(DataSource[SourceData[bytes]]):
         end = datetime.now()
 
         if self.__verbose:
-            self.__logger.log(f'config: {config} (channels: {nb_channels}, message_length: {message_length}, data_length: {data_length})')
-            self.__logger.log(f'data: {data}')
-            self.__logger.log(f'check: {check_byte}')
+            self.__logger.log(
+                f"config: {config} (channels: {nb_channels}, message_length: {message_length}, data_length: {data_length})"
+            )
+            self.__logger.log(f"data: {data}")
+            self.__logger.log(f"check: {check_byte}")
 
         if check_byte != self.__check_byte:
-            raise RuntimeError('Did not received the expected UART packet')
+            raise RuntimeError("Did not received the expected UART packet")
 
         yield SourceData(
             value=data,

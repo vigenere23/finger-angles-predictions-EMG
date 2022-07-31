@@ -1,5 +1,4 @@
 from typing import TypeVar
 
-
-InputType = TypeVar('InputType')
-OutputType = TypeVar('OutputType')
+InputType = TypeVar("InputType")
+OutputType = TypeVar("OutputType")

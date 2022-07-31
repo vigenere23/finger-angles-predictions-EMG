@@ -9,6 +9,6 @@ class CSVExecutorFactory(ExecutorFactory):
         # handler = CSVWriter(file=path, batch_size=100, strategy=ValueOnly())
 
         self.__executor = FromSourceExecutor(source=source, handler=handler)
-    
+
     def create(self) -> Executor:
         return self.__executor

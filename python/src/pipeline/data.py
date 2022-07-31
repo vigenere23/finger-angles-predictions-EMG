@@ -2,7 +2,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Generic, TypeVar
 
-DataType = TypeVar('DataType')
+DataType = TypeVar("DataType")
+
 
 @dataclass
 class SourceData(Generic[DataType]):
