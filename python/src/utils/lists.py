@@ -1,7 +1,6 @@
 from typing import Generic, Iterator, List, TypeVar
 
-
-ListItem = TypeVar('ListItem')
+ListItem = TypeVar("ListItem")
 
 
 class SizedFifo(Generic[ListItem]):
@@ -15,7 +14,7 @@ class SizedFifo(Generic[ListItem]):
 
     def add_all(self, items: List[ListItem]):
         self.__list.extend(items)
-        self.__list = self.__list[-self.__size:]
+        self.__list = self.__list[-self.__size :]
 
     def to_list(self) -> List[ListItem]:
         return self.__list
@@ -28,6 +27,8 @@ class SizedFifo(Generic[ListItem]):
 
 
 def iter_groups(list: List[ListItem], group_size: int) -> Iterator[List[ListItem]]:
-    generator = (list[index:index+group_size] for index in range(0, len(list), group_size))
+    generator = (
+        list[index : index + group_size] for index in range(0, len(list), group_size)
+    )
     for group in generator:
         yield group

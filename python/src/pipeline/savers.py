@@ -1,10 +1,11 @@
-from abc import ABC, abstractmethod
-from os import path, makedirs
 import csv
+from abc import ABC, abstractmethod
+from os import makedirs, path
 from typing import List, Optional
+
 from src.pipeline.data import ProcessedData
-from src.utils.types import InputType
 from src.pipeline.handlers import DataHandler
+from src.utils.types import InputType
 
 
 class CSVSavingStrategy(ABC):
@@ -19,14 +20,10 @@ class CSVSavingStrategy(ABC):
 
 class Complete(CSVSavingStrategy):
     def create_header(self) -> Optional[List[str]]:
-        return ['channel', 'timestamp', 'value']
+        return ["channel", "timestamp", "value"]
 
     def create_row(self, data: ProcessedData[InputType]) -> List[str]:
-        return [
-            data.channel,
-            data.time,
-            data.filtered
-        ]
+        return [data.channel, data.time, data.filtered]
 
 
 class ValueOnly(CSVSavingStrategy):
@@ -34,20 +31,15 @@ class ValueOnly(CSVSavingStrategy):
         return None
 
     def create_row(self, data: ProcessedData[InputType]) -> List[str]:
-        return [
-            data.filtered
-        ]
+        return [data.filtered]
 
 
 class WithoutChannel(CSVSavingStrategy):
     def create_header(self) -> Optional[List[str]]:
-        return ['timestamp', 'value']
+        return ["timestamp", "value"]
 
     def create_row(self, data: ProcessedData[InputType]) -> List[str]:
-        return [
-            data.time,
-            data.filtered
-        ]
+        return [data.time, data.filtered]
 
 
 class CSVWriter(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
@@ -77,6 +69,8 @@ class CSVWriter(DataHandler[ProcessedData[InputType], ProcessedData[InputType]])
         self._next(input)
 
     def __write_rows(self, rows):
-        with open(self.__file, 'a+', newline='\n') as csvfile:
-            writer = csv.writer(csvfile, delimiter=';', quotechar='\\', quoting=csv.QUOTE_MINIMAL)
+        with open(self.__file, "a+", newline="\n") as csvfile:
+            writer = csv.writer(
+                csvfile, delimiter=";", quotechar="\\", quoting=csv.QUOTE_MINIMAL
+            )
             writer.writerows(rows)
