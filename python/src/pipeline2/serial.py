@@ -14,6 +14,9 @@ from src.pipeline.data import SerialData
 from src.utils.loggers import ConsoleLogger, Logger
 
 
+# TODO add tests
+
+
 @dataclass
 class FrequencyConfig:
     amplitude: float

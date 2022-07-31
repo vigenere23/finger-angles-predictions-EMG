@@ -1,4 +1,7 @@
 import multiprocessing
+import os
+import pathlib
+from datetime import datetime
 from typing import List
 
 from modupipe.queue import GetBlocking, PutNonBlocking, Queue
@@ -7,8 +10,9 @@ from modupipe.sink import ConditionalSink, QueueSink, Sink, SinkList
 from modupipe.source import QueueSource
 
 from src.pipeline2.conditions import ChannelSelection
+from src.pipeline2.csv import CSVWriter, WithoutChannel
 from src.pipeline2.mappers import Log, ProcessFromSerial, TimeChecker, ToInt
-from src.pipeline2.sources import SerialSourceFactory
+from src.pipeline2.serial import SerialSourceFactory
 from src.pipeline.data import ProcessedData, SerialData
 from src.utils.loggers import ConsoleLogger
 
@@ -37,6 +41,18 @@ class ProcessingPipelineFactory:
         return Retry(pipeline, nb_times=1)
 
 
+class SavingPipelineFactory:
+    def create(
+        self, source_queue: Queue[ProcessedData[int]], filename: str
+    ) -> Runnable:
+        source = QueueSource(source_queue)
+        sink = CSVWriter[ProcessedData[int]](
+            file=filename, batch_size=100, strategy=WithoutChannel()
+        )
+
+        return Pipeline(source, sink)
+
+
 class AcquisitionExperimentFactory:
     def create(
         self,
@@ -44,6 +60,9 @@ class AcquisitionExperimentFactory:
         plotting_channels: List[int] = [],
         saving_channels: List[int] = [],
     ) -> Runnable:
+        experiment_path = os.path.join(
+            pathlib.Path.cwd(), "data", f"acq-{datetime.now().timestamp()}"
+        )
         pipelines: List[Runnable] = []
 
         source_out_queue = Queue[SerialData[bytes]](
@@ -69,7 +88,12 @@ class AcquisitionExperimentFactory:
             if channel in saving_channels:
                 queue = Queue(multiprocessing.Queue())
                 channel_sinks.append(QueueSink(queue, strategy=PutNonBlocking()))
-                # TODO create pipeline using queue
+                filename = os.path.join(experiment_path, f"emg-{channel}.csv")
+
+                pipeline = SavingPipelineFactory().create(
+                    source_queue=queue, filename=filename
+                )
+                pipelines.append(pipeline)
 
             channel_sink = ConditionalSink(
                 SinkList(channel_sinks), ChannelSelection(channel)
