@@ -4,56 +4,31 @@ import pathlib
 from datetime import datetime
 from typing import List
 
-from modupipe.queue import GetBlocking, PutNonBlocking, Queue
-from modupipe.runnable import MultiProcess, Pipeline, Retry, Runnable
+from modupipe.queue import PutNonBlocking, Queue
+from modupipe.runnable import MultiProcess, Runnable
 from modupipe.sink import ConditionalSink, QueueSink, Sink, SinkList
-from modupipe.source import QueueSource
 
 from src.pipeline2.conditions import ChannelSelection
-from src.pipeline2.csv import CSVWriter, WithoutChannel
-from src.pipeline2.mappers import Log, ProcessFromSerial, TimeChecker, ToInt
-from src.pipeline2.serial import SerialSourceFactory
+from src.pipeline2.experiment.pipelines import (
+    FilteringPipelineFactory,
+    PlottingPipelineFactory,
+    ProcessingPipelineFactory,
+    SavingPipelineFactory,
+    SourcePipelineFactory,
+)
 from src.pipeline.data import ProcessedData, SerialData
-from src.utils.loggers import ConsoleLogger
-
-
-class SourcePipelineFactory:
-    def create(self, serial_port: str, out_queue: Queue[SerialData[bytes]]) -> Runnable:
-        source = SerialSourceFactory().create(port=serial_port)
-        sink = QueueSink(out_queue, strategy=PutNonBlocking())
-
-        pipeline = Pipeline(source, sink)
-        return Retry(pipeline, nb_times=10)
-
-
-class ProcessingPipelineFactory:
-    def create(
-        self,
-        in_queue: Queue[SerialData[bytes]],
-        sink: Sink[ProcessedData[int]],
-    ) -> Runnable:
-        logger = ConsoleLogger(prefix="[processing]")
-
-        source = QueueSource(in_queue, strategy=GetBlocking())
-        mapper = ProcessFromSerial() + ToInt() + Log(logger) + TimeChecker()
-
-        pipeline = Pipeline(source + mapper, sink)
-        return Retry(pipeline, nb_times=1)
-
-
-class SavingPipelineFactory:
-    def create(
-        self, source_queue: Queue[ProcessedData[int]], filename: str
-    ) -> Runnable:
-        source = QueueSource(source_queue)
-        sink = CSVWriter[ProcessedData[int]](
-            file=filename, batch_size=100, strategy=WithoutChannel()
-        )
-
-        return Pipeline(source, sink)
 
 
 class AcquisitionExperimentFactory:
+    """Creates the acquisition experiment pipeline.
+
+    Pipeline architecture :
+    ```
+    serial -> processing -> channel1 -> filtering -> out [csv, plot]
+                         -> channel2 -> filtering -> out [csv, plot]
+    ```
+    """
+
     def create(
         self,
         serial_port: str,
@@ -78,27 +53,41 @@ class AcquisitionExperimentFactory:
         used_channels = set(plotting_channels + saving_channels)
 
         for channel in used_channels:
-            channel_sinks: List[Sink[ProcessedData[int]]] = []
+            channel_filtering_sinks: List[Sink[ProcessedData[int]]] = []
 
             if channel in plotting_channels:
                 queue = Queue(multiprocessing.Queue())
-                channel_sinks.append(QueueSink(queue, strategy=PutNonBlocking()))
-                # TODO create pipeline using queue
-
-            if channel in saving_channels:
-                queue = Queue(multiprocessing.Queue())
-                channel_sinks.append(QueueSink(queue, strategy=PutNonBlocking()))
-                filename = os.path.join(experiment_path, f"emg-{channel}.csv")
-
-                pipeline = SavingPipelineFactory().create(
-                    source_queue=queue, filename=filename
+                channel_filtering_sinks.append(
+                    QueueSink(queue, strategy=PutNonBlocking())
+                )
+                pipeline = PlottingPipelineFactory().create(
+                    channel=channel, source_queue=queue
                 )
                 pipelines.append(pipeline)
 
-            channel_sink = ConditionalSink(
-                SinkList(channel_sinks), ChannelSelection(channel)
+            if channel in saving_channels:
+                queue = Queue(multiprocessing.Queue())
+                channel_filtering_sinks.append(
+                    QueueSink(queue, strategy=PutNonBlocking())
+                )
+
+                pipeline = SavingPipelineFactory().create(
+                    channel=channel, source_queue=queue, experiment_path=experiment_path
+                )
+                pipelines.append(pipeline)
+
+            channel_processing_out_queue = Queue(multiprocessing.Queue())
+            channel_processing_sink = ConditionalSink(
+                QueueSink(channel_processing_out_queue, strategy=PutNonBlocking()),
+                ChannelSelection(channel),
             )
-            processing_sinks.append(channel_sink)
+            processing_sinks.append(channel_processing_sink)
+
+            channel_filtering_pipeline = FilteringPipelineFactory().create(
+                in_queue=channel_processing_out_queue,
+                sink=SinkList(channel_filtering_sinks),
+            )
+            pipelines.append(channel_filtering_pipeline)
 
         processing_pipeline = ProcessingPipelineFactory().create(
             in_queue=source_out_queue, sink=SinkList(processing_sinks)

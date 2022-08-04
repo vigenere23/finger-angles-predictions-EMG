@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from datetime import datetime
 from typing import Any, Generic, Iterator
 
 import numpy as np
 from modupipe.mapper import Mapper
+from scipy import signal
 
 from src.pipeline.data import ProcessedData, SerialData
 from src.utils.lists import iter_groups
@@ -77,50 +77,44 @@ class ToInt(Mapper[ProcessedData[bytes], ProcessedData[int]]):
             )
 
 
-class Time(Mapper[InputType, InputType]):
-    def __init__(self, logger: Logger, timeout: int = 1) -> None:
-        super().__init__()
-        self.__start = datetime.now()
-        self.__count = 0
-        self.__logger = logger
-        self.__timeout = timeout
+class NotchFrequencyOnline(Mapper[ProcessedData[int], ProcessedData[int]]):
+    def __init__(self, frequency: float, sampling_frequency: float):
+        self.__b, self.__a = signal.iirnotch(Q=30, w0=frequency, fs=sampling_frequency)
+        self.__z = signal.lfilter_zi(self.__b, self.__a)
 
-    def map(self, items: Iterator[InputType]) -> Iterator[InputType]:
+    def map(self, items: Iterator[ProcessedData[int]]) -> Iterator[ProcessedData[int]]:
         for item in items:
-            now = datetime.now()
-            self.__count += 1
-
-            if (now - self.__start).seconds >= self.__timeout:
-                self.__logger.log(f"Rate : {round(self.__count/self.__timeout, 2)} / s")
-                self.__count = 0
-                self.__start = now
-
-            yield item
-
-
-# class Plot(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
-#     def __init__(self, strategy: PlottingStrategy):
-#         super().__init__()
-#         self.__strategy = strategy
-
-#     def handle(self, input: ProcessedData[InputType]):
-#         self.__strategy.update_plot(input.time, [input.original, input.filtered])
-#         self._next(input)
+            filtered, self.__z = signal.lfilter(
+                self.__b, self.__a, [item.filtered], zi=self.__z
+            )
+            yield ProcessedData(
+                time=item.time,
+                channel=item.channel,
+                original=item.original,
+                filtered=filtered,
+            )
 
 
-class TimeChecker(Mapper[InputType, InputType]):
-    def __init__(self):
+class NotchDC(Mapper[ProcessedData[int], ProcessedData[int]]):
+    def __init__(self, R: float):
         super().__init__()
-        self.__start = datetime.now()
+        self.__R = R
+        self.__x1 = 0
+        self.__y1 = 0
 
-    def map(self, items: Iterator[InputType]) -> Iterator[InputType]:
+    def map(self, items: Iterator[ProcessedData[int]]) -> Iterator[ProcessedData[int]]:
         for item in items:
-            end = datetime.now()
-            if (end - self.__start).seconds >= 1:
-                self.__start = end
-                print(end.timestamp())
+            y_n = int(item.filtered - self.__x1 + self.__R * self.__y1)
 
-            yield item
+            self.__x1 = item.filtered
+            self.__y1 = y_n
+
+            yield ProcessedData(
+                time=item.time,
+                channel=item.channel,
+                original=item.original,
+                filtered=y_n,
+            )
 
 
 # class FixedAccumulator(DataHandler[ProcessedData[InputType], RangeData[InputType]]):

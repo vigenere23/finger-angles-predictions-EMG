@@ -13,7 +13,6 @@ from serial.serialutil import PARITY_NONE, PARITY_ODD
 from src.pipeline.data import SerialData
 from src.utils.loggers import ConsoleLogger, Logger
 
-
 # TODO add tests
 
 

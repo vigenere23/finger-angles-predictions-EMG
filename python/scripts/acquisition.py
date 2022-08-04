@@ -1,17 +1,14 @@
 from src.cli.args import AcquisitionArgs
-from src.pipeline.executors.acquisition_experiment import AcquisitionExperimentBuilder
+from src.pipeline2.experiment.acquisition import AcquisitionExperimentFactory
 
 
 def run(args: AcquisitionArgs):
-    builder = AcquisitionExperimentBuilder()
+    factory = AcquisitionExperimentFactory()
 
-    for channel in args.plot:
-        builder.add_plotting_for(channel)
+    pipeline = factory.create(
+        serial_port=args.serial_port,
+        plotting_channels=args.plot,
+        saving_channels=args.csv,
+    )
 
-    for channel in args.csv:
-        builder.add_csv_for(channel)
-
-    builder.set_serial_port(serial_port=args.serial_port)
-
-    experiment = builder.build()
-    experiment.execute()
+    pipeline.run()

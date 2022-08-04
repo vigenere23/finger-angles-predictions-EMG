@@ -8,7 +8,6 @@ from modupipe.sink import Sink
 from src.pipeline.data import ProcessedData
 from src.utils.types import InputType
 
-
 # TODO add tests
 
 
