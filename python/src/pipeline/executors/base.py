@@ -1,7 +1,6 @@
 import traceback
 from abc import ABC, abstractmethod
 from multiprocessing.context import Process
-from threading import Thread
 from typing import List
 
 from src.pipeline.handlers import DataHandler
@@ -49,29 +48,6 @@ class Retryer(Executor):
 
         if failed:
             raise RuntimeError("Maximum number of retries exceeded")
-
-
-class LoopExecutor(Executor):
-    def __init__(self, executor: Executor):
-        self.__executor = executor
-
-    def execute(self):
-        while True:
-            self.__executor.execute()
-
-
-class ThreadsExecutor(Executor):
-    def __init__(self, threads: List[Thread], wait_for_ending: bool) -> None:
-        self.__threads = threads
-        self.__wait_for_ending = wait_for_ending
-
-    def execute(self):
-        for thread in self.__threads:
-            thread.start()
-
-        if self.__wait_for_ending:
-            for thread in self.__threads:
-                thread.join()
 
 
 class ProcessesExecutor(Executor):

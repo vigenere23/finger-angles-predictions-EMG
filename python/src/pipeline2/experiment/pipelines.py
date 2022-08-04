@@ -46,7 +46,7 @@ class ProcessingPipelineFactory:
         in_queue: Queue[SerialData[bytes]],
         sink: Sink[ProcessedData[int]],
     ) -> Runnable:
-        logger = ConsoleLogger(prefix="[processing]")
+        logger = ConsoleLogger(name="processing")
 
         source = QueueSource(in_queue, strategy=GetBlocking())
         mapper = ProcessFromSerial() + ToInt()

@@ -38,7 +38,7 @@ class Log(Mapper[InputType, InputType]):
     def map(self, items: Iterator[InputType]) -> Iterator[InputType]:
         for item in items:
             to_log = self.__mapper(item) if self.__mapper else item
-            self.__logger.log(to_log)
+            self.__logger.debug(to_log)
             yield item
 
 

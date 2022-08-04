@@ -150,11 +150,11 @@ class SerialSource(DataSource[SerialData[bytes]]):
         end = datetime.now()
 
         if self.__verbose:
-            self.__logger.log(
+            self.__logger.debug(
                 f"config: {config} (channels: {nb_channels}, message_length: {message_length}, data_length: {data_length})"
             )
-            self.__logger.log(f"data: {data}")
-            self.__logger.log(f"check: {check_byte}")
+            self.__logger.debug(f"data: {data}")
+            self.__logger.debug(f"check: {check_byte}")
 
         if check_byte != self.__check_byte:
             raise RuntimeError("Did not received the expected UART packet")

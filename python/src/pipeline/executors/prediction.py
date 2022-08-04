@@ -29,7 +29,7 @@ class PredictionExecutorFactory(ExecutorFactory):
         model: PredictionModel,
         animate: bool = None,
     ) -> None:
-        logger = ConsoleLogger(prefix="[prediction]")
+        logger = ConsoleLogger(name="prediction")
 
         out_handlers: List[DataHandler] = [
             FixedRangeAccumulator(size=len(channels)),

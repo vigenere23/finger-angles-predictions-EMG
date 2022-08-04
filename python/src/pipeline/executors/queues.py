@@ -10,7 +10,7 @@ class QueuesAnalyzer(Executor):
     def __init__(self, queues: List[NamedQueue]) -> None:
         self.__queues = queues
         self.__start = datetime.now()
-        self.__logger = ConsoleLogger(prefix="[queue usage]")
+        self.__logger = ConsoleLogger(name="queue usage")
 
     def execute(self):
         now = datetime.now()

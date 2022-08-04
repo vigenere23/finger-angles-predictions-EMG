@@ -28,7 +28,7 @@ class LogRate(Sink[Any]):
         self.__count += 1
 
         if (now - self.__start).seconds >= self.__timeout:
-            self.__logger.log(f"Rate : {round(self.__count/self.__timeout, 2)} / s")
+            self.__logger.debug(f"Rate : {round(self.__count/self.__timeout, 2)} / s")
             self.__count = 0
             self.__start = now
 
@@ -42,4 +42,4 @@ class LogTime(Sink[Any]):
         end = datetime.now()
         if (end - self.__start).seconds >= 1:
             self.__start = end
-            self.logger.log(f"Time : {end.timestamp()}")
+            self.logger.debug(f"Time : {end.timestamp()}")

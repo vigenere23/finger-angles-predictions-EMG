@@ -22,7 +22,7 @@ class ProcessingExecutorFactory(ExecutorFactory):
         self.__output_handler = output_handler
 
     def create(self) -> Executor:
-        logger = ConsoleLogger(prefix="[processing]")
+        logger = ConsoleLogger(name="processing")
         handler = HandlersList(
             [
                 ProcessFromUART(),

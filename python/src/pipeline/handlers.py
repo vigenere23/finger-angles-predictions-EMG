@@ -60,7 +60,7 @@ class Print(DataHandler[InputType, InputType]):
 
     def handle(self, input: InputType):
         to_log = self.__mapper(input) if self.__mapper else input
-        self.__logger.log(to_log)
+        self.__logger.debug(to_log)
         self._next(input)
 
 
@@ -116,7 +116,7 @@ class Time(DataHandler[InputType, InputType]):
         self.__count += 1
 
         if (now - self.__start).seconds >= self.__timeout:
-            self.__logger.log(f"Rate : {round(self.__count/self.__timeout, 2)} / s")
+            self.__logger.debug(f"Rate : {round(self.__count/self.__timeout, 2)} / s")
             self.__count = 0
             self.__start = now
 
