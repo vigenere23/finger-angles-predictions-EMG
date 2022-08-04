@@ -4,9 +4,9 @@ ListItem = TypeVar("ListItem")
 
 
 class SizedFifo(Generic[ListItem]):
-    def __init__(self, size: int):
+    def __init__(self, size: int, null_value: ListItem):
         self.__size = size
-        self.__list = [0] * size
+        self.__list = [null_value] * size
 
     def append(self, item: ListItem):
         self.__list.append(item)
@@ -27,8 +27,6 @@ class SizedFifo(Generic[ListItem]):
 
 
 def iter_groups(list: List[ListItem], group_size: int) -> Iterator[List[ListItem]]:
-    generator = (
+    return (
         list[index : index + group_size] for index in range(0, len(list), group_size)
     )
-    for group in generator:
-        yield group

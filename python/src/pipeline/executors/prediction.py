@@ -3,11 +3,10 @@ from typing import List
 from src.pipeline.data import ProcessedData
 from src.pipeline.executors.base import Executor, ExecutorFactory, FromSourceExecutor
 from src.pipeline.handlers import (
-    Animate,
     ChannelSelection,
     ConditionalHandler,
+    DataHandler,
     ExtractCharacteristics,
-    FixedAccumulator,
     FixedRangeAccumulator,
     HandlersList,
     Predict,
@@ -17,7 +16,7 @@ from src.pipeline.handlers import (
     ToNumpy,
 )
 from src.pipeline.sources import DataSource
-from src.pipeline.types import CharacteristicsExtractor, Model
+from src.pipeline.types import CharacteristicsExtractor, PredictionModel
 from src.utils.loggers import ConsoleLogger
 
 
@@ -27,12 +26,12 @@ class PredictionExecutorFactory(ExecutorFactory):
         source: DataSource[ProcessedData[int]],
         channels: List[int],
         extractor: CharacteristicsExtractor,
-        model: Model,
+        model: PredictionModel,
         animate: bool = None,
     ) -> None:
-        logger = ConsoleLogger(prefix="[prediction]")
+        logger = ConsoleLogger(name="prediction")
 
-        out_handlers = [
+        out_handlers: List[DataHandler] = [
             FixedRangeAccumulator(size=len(channels)),
             ToNumpy(),
             Predict(model=model),
@@ -50,10 +49,10 @@ class PredictionExecutorFactory(ExecutorFactory):
 
         out_handler = HandlersList(out_handlers)
 
-        handlers = []
+        handlers: List[DataHandler] = []
 
         for channel in channels:
-            channel_handlers = [
+            channel_handlers: List[DataHandler] = [
                 TimedAccumulator[int](time_in_seconds=1 / 10),
                 ToNumpy(to2D=True),
                 ExtractCharacteristics(extractor=extractor),

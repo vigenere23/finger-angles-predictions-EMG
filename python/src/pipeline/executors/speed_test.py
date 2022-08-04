@@ -15,7 +15,7 @@ class SpeedTest(Executor):
         self.__port = serial_port
 
     def execute(self):
-        logger = ConsoleLogger(prefix="[speed-test]")
+        logger = ConsoleLogger(name="speed-test")
         source = SerialSource(
             port=self.__port,
             baudrate=115200,

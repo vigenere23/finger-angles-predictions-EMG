@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.ai.utilities import *
+from src.ai.utilities import getMAV, getRMS, getSD, getSSC, getVar, getZC
 from src.pipeline.types import CharacteristicsExtractor
 
 

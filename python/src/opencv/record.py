@@ -1,6 +1,7 @@
 import os
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any, Dict, List
 
 import cv2 as cv
 import pandas as pd
@@ -15,7 +16,7 @@ class HandRecorder:
         self.hand_side = hand_side
         self.finger = finger
         self.detection = HandDetection()
-        self.angles_recorded = {
+        self.angles_recorded: Dict[str, List[Any]] = {
             "timestamp": [],
             "mcp angle": [],
             "pip angle": [],
@@ -24,7 +25,7 @@ class HandRecorder:
         self.camera = camera
 
     def start_record_hand(self):
-        if self.isRecording == False:
+        if not self.isRecording:
             self.capture = cv.VideoCapture(self.camera)
             self.isRecording = True
             while True:
@@ -37,7 +38,7 @@ class HandRecorder:
             print("Is recording!!")
 
     def start_record_hand_during(self, seconds):
-        if self.isRecording == False:
+        if not self.isRecording:
             self.capture = cv.VideoCapture(self.camera)
             self.isRecording = True
             timeout = datetime.now() + timedelta(seconds=seconds)

@@ -1,18 +1,19 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from math import pi, sin
 from random import randint
 from time import sleep
-from typing import Generic, Iterator, List
+from typing import Iterator, List
 
+from modupipe.source import Source
 from serial import Serial
 from serial.serialutil import PARITY_NONE, PARITY_ODD
 
 from src.pipeline.data import SerialData
-from src.utils.loggers import Logger
-from src.utils.queues import NamedQueue, QueueFetchingStrategy
-from src.utils.types import OutputType
+from src.utils.loggers import ConsoleLogger, Logger
+
+# TODO add tests
 
 
 @dataclass
@@ -22,13 +23,11 @@ class FrequencyConfig:
     offset: float
 
 
-class DataSource(ABC, Generic[OutputType]):
-    @abstractmethod
-    def get(self) -> Iterator[OutputType]:
-        raise NotImplementedError()
+class SerialSource(Source[SerialData[bytes]], ABC):
+    pass
 
 
-class RandomSource(DataSource[SerialData[bytes]]):
+class RandomSerialSource(Source[SerialData[bytes]]):
     def __init__(self):
         self.__data_length = 32
         self.__message_length = 2
@@ -40,7 +39,7 @@ class RandomSource(DataSource[SerialData[bytes]]):
     def __generate(self) -> bytes:
         return randint(-4000, 4000).to_bytes(2, "big", signed=True)
 
-    def get(self) -> Iterator[SerialData[bytes]]:
+    def fetch(self) -> Iterator[SerialData[bytes]]:
         end = self.__start + self.__dt
 
         yield SerialData(
@@ -57,7 +56,7 @@ class RandomSource(DataSource[SerialData[bytes]]):
         sleep(self.__dt.total_seconds())
 
 
-class FrequencySource(DataSource[SerialData[bytes]]):
+class FrequencySource(Source[SerialData[bytes]]):
     def __init__(self, configs: List[FrequencyConfig]):
         self.__data_length = 256
         self.__message_length = 2
@@ -66,10 +65,11 @@ class FrequencySource(DataSource[SerialData[bytes]]):
         self.__configs = configs
 
         self.__sample_dt = timedelta(seconds=1 / self.__sample_rate)
-        self.__sleep_dt = timedelta(
-            seconds=(self.__data_length + 5)
-            / (self.__sample_rate * 2 * self.__nb_channels)
+
+        sleep_seconds = (self.__data_length + 5) / (
+            self.__sample_rate * 2 * self.__nb_channels
         )
+        self.__sleep_dt = timedelta(seconds=sleep_seconds)
         self.__start = datetime.now()
 
     def __generate(self, t: float) -> bytes:
@@ -81,9 +81,9 @@ class FrequencySource(DataSource[SerialData[bytes]]):
 
         return int(data).to_bytes(2, "big", signed=True)
 
-    def get(self) -> Iterator[SerialData[bytes]]:
+    def fetch(self) -> Iterator[SerialData[bytes]]:
         delay_start = datetime.now()
-        data = []
+        data: List[bytes] = []
         end = self.__start
 
         for _ in range(self.__data_length // 2 // self.__nb_channels):
@@ -91,10 +91,10 @@ class FrequencySource(DataSource[SerialData[bytes]]):
             data.extend((value for _ in range(self.__nb_channels)))
             end += self.__sample_dt
 
-        data = b"".join(data)
+        joined_data = b"".join(data)
 
         yield SerialData(
-            value=data,
+            value=joined_data,
             start=self.__start,
             end=end - self.__sample_dt,
             length=self.__data_length,
@@ -108,7 +108,7 @@ class FrequencySource(DataSource[SerialData[bytes]]):
         sleep((self.__sleep_dt - delay).total_seconds())
 
 
-class SerialSource(DataSource[SerialData[bytes]]):
+class BaseSerialSource(Source[SerialData[bytes]]):
     def __init__(
         self,
         port: str,
@@ -134,8 +134,7 @@ class SerialSource(DataSource[SerialData[bytes]]):
         self.__logger = logger
         self.__verbose = verbose
 
-    def get(self) -> Iterator[SerialData[bytes]]:
-
+    def fetch(self) -> Iterator[SerialData[bytes]]:
         start = datetime.now()
         self.__serial.read_until(self.__sync_byte)
 
@@ -169,10 +168,35 @@ class SerialSource(DataSource[SerialData[bytes]]):
         )
 
 
-class QueueSource(DataSource[OutputType], Generic[OutputType]):
-    def __init__(self, queue: NamedQueue, strategy: QueueFetchingStrategy):
-        self.__queue = queue
-        self.__strategy = strategy
+class SerialSourceFactory:
+    def create(self, port: str) -> SerialSource:
+        logger = ConsoleLogger(name="serial")
 
-    def get(self) -> Iterator[OutputType]:
-        yield self.__strategy.get(self.__queue)
+        if port == "rand":
+            return RandomSerialSource()
+        elif "freq" in port:
+            try:
+                configs = []
+                for config in port.split(":")[1].split("_"):
+                    amp, freq, offset = config.split("-")
+                    configs.append(
+                        FrequencyConfig(
+                            amplitude=float(amp),
+                            frequency=float(freq),
+                            offset=float(offset),
+                        )
+                    )
+                return FrequencySource(configs=configs)
+            except KeyError:
+                raise ValueError(
+                    "format should be 'freq:<amp1-freq1-offset1>_<amp2-freq2-offset2>_<...>'"
+                )
+        else:
+            return SerialSource(
+                port=port,
+                baudrate=115200,
+                sync_byte=b"\n",
+                check_byte=b"\xFF",
+                logger=logger,
+                # verbose=True
+            )

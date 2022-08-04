@@ -18,7 +18,7 @@ class SerialExecutorFactory(ExecutorFactory):
     def __init__(self, port: str, output_handler: DataHandler) -> None:
         self.__output_handler = output_handler
 
-        logger = ConsoleLogger(prefix="[serial]")
+        logger = ConsoleLogger(name="serial")
 
         if port == "rand":
             self.__source = RandomSource()

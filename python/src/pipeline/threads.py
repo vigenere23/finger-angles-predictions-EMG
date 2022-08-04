@@ -1,7 +1,7 @@
 from threading import Thread
 from time import sleep
 
-from src.pipeline.executors import Executor
+from src.pipeline.executors.base import Executor
 
 
 class ExecutorThread(Thread):

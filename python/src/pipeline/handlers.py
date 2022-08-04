@@ -8,12 +8,12 @@ from typing import Any, Dict, Generic, List
 
 import numpy as np
 
-from src.pipeline.data import ProcessedData, RangeData, SourceData
-from src.pipeline.types import Animator, CharacteristicsExtractor, Model
+from src.pipeline.data import ProcessedData, RangeData, SerialData
+from src.pipeline.types import Animator, CharacteristicsExtractor, PredictionModel
 from src.utils.lists import iter_groups
 from src.utils.loggers import Logger
 from src.utils.plot import PlottingStrategy
-from src.utils.queues import QueuePuttingStrategy
+from src.utils.queues import NamedQueue, QueuePuttingStrategy
 from src.utils.types import InputType, OutputType
 
 
@@ -60,12 +60,12 @@ class Print(DataHandler[InputType, InputType]):
 
     def handle(self, input: InputType):
         to_log = self.__mapper(input) if self.__mapper else input
-        self.__logger.log(to_log)
+        self.__logger.debug(to_log)
         self._next(input)
 
 
-class ProcessFromUART(DataHandler[SourceData[bytes], ProcessedData[bytes]]):
-    def handle(self, input: SourceData[bytes]):
+class ProcessFromUART(DataHandler[SerialData[bytes], ProcessedData[bytes]]):
+    def handle(self, input: SerialData[bytes]):
         channel = 0
         timestamps = np.linspace(
             input.start.timestamp(),
@@ -93,7 +93,7 @@ class ToInt(DataHandler[ProcessedData[bytes], ProcessedData[int]]):
 
 
 class AddToQueue(DataHandler[InputType, InputType]):
-    def __init__(self, queue: Queue, strategy: QueuePuttingStrategy) -> None:
+    def __init__(self, queue: NamedQueue, strategy: QueuePuttingStrategy) -> None:
         super().__init__()
         self.__queue = queue
         self.__strategy = strategy
@@ -116,7 +116,7 @@ class Time(DataHandler[InputType, InputType]):
         self.__count += 1
 
         if (now - self.__start).seconds >= self.__timeout:
-            self.__logger.log(f"Rate : {round(self.__count/self.__timeout, 2)} / s")
+            self.__logger.debug(f"Rate : {round(self.__count/self.__timeout, 2)} / s")
             self.__count = 0
             self.__start = now
 
@@ -266,7 +266,7 @@ class ExtractCharacteristics(DataHandler[RangeData[np.ndarray], RangeData[np.nda
 
 
 class Predict(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
-    def __init__(self, model: Model):
+    def __init__(self, model: PredictionModel):
         super().__init__()
         self.__model = model
 

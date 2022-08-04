@@ -3,9 +3,12 @@ from abc import ABC, abstractmethod
 from os import makedirs, path
 from typing import List, Optional
 
+from modupipe.sink import Sink
+
 from src.pipeline.data import ProcessedData
-from src.pipeline.handlers import DataHandler
 from src.utils.types import InputType
+
+# TODO add tests
 
 
 class CSVSavingStrategy(ABC):
@@ -23,7 +26,7 @@ class Complete(CSVSavingStrategy):
         return ["channel", "timestamp", "value"]
 
     def create_row(self, data: ProcessedData[InputType]) -> List[str]:
-        return [data.channel, data.time, data.filtered]
+        return [str(data.channel), str(data.time), str(data.filtered)]
 
 
 class ValueOnly(CSVSavingStrategy):
@@ -31,7 +34,7 @@ class ValueOnly(CSVSavingStrategy):
         return None
 
     def create_row(self, data: ProcessedData[InputType]) -> List[str]:
-        return [data.filtered]
+        return [str(data.filtered)]
 
 
 class WithoutChannel(CSVSavingStrategy):
@@ -39,17 +42,17 @@ class WithoutChannel(CSVSavingStrategy):
         return ["timestamp", "value"]
 
     def create_row(self, data: ProcessedData[InputType]) -> List[str]:
-        return [data.time, data.filtered]
+        return [str(data.time), str(data.filtered)]
 
 
-class CSVWriter(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
+class CSVWriter(Sink[ProcessedData[InputType]]):
     def __init__(self, file: str, batch_size: int, strategy: CSVSavingStrategy) -> None:
         super().__init__()
         self.__file = file
         self.__batch_size = batch_size
         self.__strategy = strategy
 
-        self.__buffer = []
+        self.__rows_buffer: List[List[str]] = []
 
         if not path.exists(path.dirname(file)):
             makedirs(path.dirname(file))
@@ -59,14 +62,12 @@ class CSVWriter(DataHandler[ProcessedData[InputType], ProcessedData[InputType]])
         if header:
             self.__write_rows([header])
 
-    def handle(self, input: ProcessedData[InputType]) -> ProcessedData[InputType]:
-        self.__buffer.append(self.__strategy.create_row(input))
+    def receive(self, input: ProcessedData[InputType]) -> None:
+        self.__rows_buffer.append(self.__strategy.create_row(input))
 
-        if len(self.__buffer) == self.__batch_size:
-            self.__write_rows(self.__buffer)
-            self.__buffer = []
-
-        self._next(input)
+        if len(self.__rows_buffer) == self.__batch_size:
+            self.__write_rows(self.__rows_buffer)
+            self.__rows_buffer = []
 
     def __write_rows(self, rows):
         with open(self.__file, "a+", newline="\n") as csvfile:

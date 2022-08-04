@@ -1,5 +1,4 @@
 from abc import ABC, abstractmethod
-from typing import List
 
 import numpy as np
 
@@ -10,7 +9,7 @@ class CharacteristicsExtractor(ABC):
         raise NotImplementedError()
 
 
-class Model(ABC):
+class PredictionModel(ABC):
     @abstractmethod
     def predict(self, X: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
