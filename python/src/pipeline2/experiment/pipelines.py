@@ -1,20 +1,29 @@
 import os
+from typing import List
 
+import numpy as np
 from modupipe.queue import GetBlocking, PutNonBlocking, Queue
-from modupipe.runnable import Pipeline, Retry, Runnable
-from modupipe.sink import QueueSink, Sink, SinkList
-from modupipe.source import QueueSource
+from modupipe.runnable import Pipeline, Retry, Runnable, NamedRunnable
+from modupipe.sink import Printer, QueueSink, Sink, SinkList
+from modupipe.source import QueueSource, SourceList
 
 from src.pipeline2.csv import CSVWriter, WithoutChannel
 from src.pipeline2.mappers import (
+    ExtractCharacteristics,
+    Log,
+    MergeRangeData,
     NotchDC,
     NotchFrequencyOnline,
+    Predict,
     ProcessFromSerial,
+    TimedBuffer,
     ToInt,
+    ToNumpy,
 )
 from src.pipeline2.serial import SerialSourceFactory
 from src.pipeline2.sinks import LogRate, LogTime, Plot
-from src.pipeline.data import ProcessedData, SerialData
+from src.pipeline.data import ProcessedData, RangeData, SerialData
+from src.pipeline.types import CharacteristicsExtractor, PredictionModel
 from src.utils.loggers import ConsoleLogger
 from src.utils.plot import RefreshingPlot, TimedPlotUpdate
 
@@ -28,7 +37,7 @@ class FilteringPipelineFactory:
             frequency=60, sampling_frequency=2500
         )
 
-        return Pipeline(source + mapper, sink)
+        return NamedRunnable("Filtering pipeline", Pipeline(source + mapper, sink))
 
 
 class SourcePipelineFactory:
@@ -37,7 +46,7 @@ class SourcePipelineFactory:
         sink = QueueSink(out_queue, strategy=PutNonBlocking())
 
         pipeline = Pipeline(source, sink)
-        return Retry(pipeline, nb_times=10)
+        return NamedRunnable("Serial source pipeline", Retry(pipeline, nb_times=10))
 
 
 class ProcessingPipelineFactory:
@@ -53,7 +62,7 @@ class ProcessingPipelineFactory:
         sinks = SinkList([sink, LogRate(logger=logger), LogTime(logger=logger)])
 
         pipeline = Pipeline(source + mapper, sinks)
-        return Retry(pipeline, nb_times=1)
+        return NamedRunnable("Processing pipeline", Retry(pipeline, nb_times=1))
 
 
 class SavingPipelineFactory:
@@ -70,7 +79,7 @@ class SavingPipelineFactory:
             file=filename, batch_size=100, strategy=WithoutChannel()
         )
 
-        return Pipeline(source, sink)
+        return NamedRunnable("CSV saving pipeline", Pipeline(source, sink))
 
 
 class PlottingPipelineFactory:
@@ -92,4 +101,39 @@ class PlottingPipelineFactory:
         )
         sink = Plot(plot_strategy)
 
-        return Pipeline(source, sink)
+        return NamedRunnable("Plotting pipeline", Pipeline(source, sink))
+
+
+class ExtractionPipelineFactory:
+    def create(
+        self,
+        in_queue: Queue[ProcessedData[int]],
+        out_queue: Queue[RangeData[np.ndarray]],
+        extractor: CharacteristicsExtractor,
+    ):
+        logger = ConsoleLogger(name="extractor")
+        source = QueueSource(in_queue, strategy=GetBlocking())
+        mapper = (
+            TimedBuffer(time_in_seconds=1 / 10)
+            + ToNumpy(to2D=True)
+            + ExtractCharacteristics(extractor=extractor)
+            + ToNumpy(flatten=True)
+            + Log(logger)
+        )
+        sink = QueueSink(out_queue, strategy=PutNonBlocking())
+
+        return NamedRunnable("Extraction pipeline", Pipeline(source + mapper, sink))
+
+
+class PredictionPipelineFactory:
+    def create(
+        self, in_queues: List[Queue[RangeData[np.ndarray]]], model: PredictionModel
+    ):
+        logger = ConsoleLogger(name="prediction")
+        source = SourceList(
+            [QueueSource(queue, strategy=GetBlocking()) for queue in in_queues]
+        )
+        mapper = MergeRangeData() + ToNumpy() + Predict(model=model) + Log(logger)
+        sink = Printer()
+
+        return NamedRunnable("Prediction pipeline", Pipeline(source + mapper, sink))

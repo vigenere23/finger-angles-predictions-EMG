@@ -24,8 +24,10 @@ class AcquisitionExperimentFactory:
 
     Pipeline architecture :
     ```
-    serial -> processing -> channel1 -> filtering -> out [csv, plot]
-                         -> channel2 -> filtering -> out [csv, plot]
+    serial ─⏵ processing ┬─⏵ filtering ch.1 ┬─⏵ [csv]
+                         │                  └─⏵ [plot]
+                         └─⏵ filtering ch.2 ┬─⏵ [csv]
+                                            └─⏵ [plot]
     ```
     """
 
