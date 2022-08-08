@@ -6,7 +6,7 @@ from random import randint
 from time import sleep
 from typing import Iterator, List
 
-from modupipe.source import Source
+from modupipe.extractor import Extractor
 from serial import Serial
 from serial.serialutil import PARITY_NONE, PARITY_ODD
 
@@ -23,11 +23,11 @@ class FrequencyConfig:
     offset: float
 
 
-class SerialSource(Source[SerialData[bytes]], ABC):
+class SerialSource(Extractor[SerialData[bytes]], ABC):
     pass
 
 
-class RandomSerialSource(Source[SerialData[bytes]]):
+class RandomSerialSource(Extractor[SerialData[bytes]]):
     def __init__(self):
         self.__data_length = 32
         self.__message_length = 2
@@ -56,7 +56,7 @@ class RandomSerialSource(Source[SerialData[bytes]]):
         sleep(self.__dt.total_seconds())
 
 
-class FrequencySource(Source[SerialData[bytes]]):
+class FrequencySource(Extractor[SerialData[bytes]]):
     def __init__(self, configs: List[FrequencyConfig]):
         self.__data_length = 256
         self.__message_length = 2
@@ -108,7 +108,7 @@ class FrequencySource(Source[SerialData[bytes]]):
         sleep((self.__sleep_dt - delay).total_seconds())
 
 
-class BaseSerialSource(Source[SerialData[bytes]]):
+class BaseSerialSource(Extractor[SerialData[bytes]]):
     def __init__(
         self,
         port: str,

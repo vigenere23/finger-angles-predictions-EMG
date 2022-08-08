@@ -195,7 +195,7 @@ protobuf = ">=3.11,<4"
 
 [[package]]
 name = "modupipe"
-version = "0.3.1"
+version = "1.0.1"
 description = "A modular and extensible ETL-like pipeline builder"
 category = "main"
 optional = false
@@ -528,7 +528,7 @@ typing-extensions = ">=3.7.4"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.11"
-content-hash = "c5071cd7868a1fc39a7859a701940655a9bc9821ea632483064661b244f7bdc0"
+content-hash = "c0098f5bc1893ce51f91afcc4666d197459b92b185cd41616e8a99ef0f9fad22"
 
 [metadata.files]
 absl-py = []

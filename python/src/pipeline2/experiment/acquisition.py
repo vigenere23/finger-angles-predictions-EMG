@@ -4,9 +4,9 @@ import pathlib
 from datetime import datetime
 from typing import List
 
+from modupipe.loader import LoaderList, OnCondition, PutToQueue, Sink
 from modupipe.queue import PutNonBlocking, Queue
 from modupipe.runnable import MultiProcess, Runnable
-from modupipe.sink import ConditionalSink, QueueSink, Sink, SinkList
 
 from src.pipeline2.conditions import ChannelSelection
 from src.pipeline2.experiment.pipelines import (
@@ -60,7 +60,7 @@ class AcquisitionExperimentFactory:
             if channel in plotting_channels:
                 queue = Queue(multiprocessing.Queue())
                 channel_filtering_sinks.append(
-                    QueueSink(queue, strategy=PutNonBlocking())
+                    PutToQueue(queue, strategy=PutNonBlocking())
                 )
                 pipeline = PlottingPipelineFactory().create(
                     channel=channel, source_queue=queue
@@ -70,7 +70,7 @@ class AcquisitionExperimentFactory:
             if channel in saving_channels:
                 queue = Queue(multiprocessing.Queue())
                 channel_filtering_sinks.append(
-                    QueueSink(queue, strategy=PutNonBlocking())
+                    PutToQueue(queue, strategy=PutNonBlocking())
                 )
 
                 pipeline = SavingPipelineFactory().create(
@@ -79,20 +79,20 @@ class AcquisitionExperimentFactory:
                 pipelines.append(pipeline)
 
             channel_processing_out_queue = Queue(multiprocessing.Queue())
-            channel_processing_sink = ConditionalSink(
-                QueueSink(channel_processing_out_queue, strategy=PutNonBlocking()),
+            channel_processing_sink = OnCondition(
                 ChannelSelection(channel),
+                PutToQueue(channel_processing_out_queue, strategy=PutNonBlocking()),
             )
             processing_sinks.append(channel_processing_sink)
 
             channel_filtering_pipeline = FilteringPipelineFactory().create(
                 in_queue=channel_processing_out_queue,
-                sink=SinkList(channel_filtering_sinks),
+                loader=LoaderList(channel_filtering_sinks),
             )
             pipelines.append(channel_filtering_pipeline)
 
         processing_pipeline = ProcessingPipelineFactory().create(
-            in_queue=source_out_queue, sink=SinkList(processing_sinks)
+            in_queue=source_out_queue, sink=LoaderList(processing_sinks)
         )
         pipelines.append(processing_pipeline)
 

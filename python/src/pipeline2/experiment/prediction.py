@@ -2,9 +2,9 @@ import multiprocessing
 from typing import List
 
 import numpy as np
+from modupipe.loader import LoaderList, OnCondition, PutToQueue, Sink
 from modupipe.queue import PutNonBlocking, Queue
 from modupipe.runnable import MultiProcess, Runnable
-from modupipe.sink import ConditionalSink, QueueSink, Sink, SinkList
 
 from src.ai.transform_unique import FeaturesTransformEMG
 from src.ai.utilities import load_model
@@ -61,7 +61,7 @@ class PredictionExperimentFactory:
             if channel in plotting_channels:
                 plotting_in_queue = Queue(multiprocessing.Queue())
                 filtering_sinks.append(
-                    QueueSink(plotting_in_queue, strategy=PutNonBlocking())
+                    PutToQueue(plotting_in_queue, strategy=PutNonBlocking())
                 )
                 pipeline = PlottingPipelineFactory().create(
                     channel=channel, source_queue=plotting_in_queue
@@ -71,7 +71,7 @@ class PredictionExperimentFactory:
             if channel in predicting_channels:
                 extraction_in_queue = Queue(multiprocessing.Queue())
                 filtering_sinks.append(
-                    QueueSink(extraction_in_queue, strategy=PutNonBlocking())
+                    PutToQueue(extraction_in_queue, strategy=PutNonBlocking())
                 )
 
                 extraction_out_queue = Queue(multiprocessing.Queue())
@@ -85,21 +85,22 @@ class PredictionExperimentFactory:
                 pipelines.append(pipeline)
 
             processing_out_queue = Queue(multiprocessing.Queue())
-            processing_sink = ConditionalSink(
-                QueueSink(processing_out_queue, strategy=PutNonBlocking()),
+            processing_sink = OnCondition(
                 ChannelSelection(channel),
+                PutToQueue(processing_out_queue, strategy=PutNonBlocking()),
             )
             processing_sinks.append(processing_sink)
 
             filtering_pipeline = FilteringPipelineFactory().create(
                 in_queue=processing_out_queue,
-                sink=SinkList(filtering_sinks),
+                loader=LoaderList(filtering_sinks),
             )
             pipelines.append(filtering_pipeline)
 
             if len(extraction_out_queues) != 0:
                 prediction_pipeline = PredictionPipelineFactory().create(
-                    in_queues=extraction_out_queues, model=load_model(model_name=model_name)
+                    in_queues=extraction_out_queues,
+                    model=load_model(model_name=model_name),
                 )
                 pipelines.append(prediction_pipeline)
 
