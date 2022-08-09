@@ -6,8 +6,8 @@ import numpy as np
 from modupipe.mapper import Mapper
 from scipy import signal
 
+from src.pipeline.base import CharacteristicsExtractor, PredictionModel
 from src.pipeline.data import ProcessedData, RangeData, SerialData
-from src.pipeline.types import CharacteristicsExtractor, PredictionModel
 from src.utils.lists import iter_groups
 from src.utils.loggers import Logger
 from src.utils.types import InputType

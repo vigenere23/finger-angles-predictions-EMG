@@ -1,8 +1,8 @@
 from modupipe.runnable import FullPipeline, NamedRunnable, Retry, Runnable
 
-from src.pipeline2.loaders import LogRate
-from src.pipeline2.mappers import ProcessFromSerial, ToInt
-from src.pipeline2.serial import SerialSourceFactory
+from src.pipeline.loaders import LogRate
+from src.pipeline.mappers import ProcessFromSerial, ToInt
+from src.pipeline.serial import SerialSourceFactory
 from src.utils.loggers import ConsoleLogger
 
 

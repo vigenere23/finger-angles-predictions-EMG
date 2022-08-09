@@ -1,5 +1,5 @@
 from src.cli.args import SpeedTestArgs
-from src.pipeline2.experiment.speed_test import SpeedTestExperimentFactory
+from src.pipeline.experiment.speed_test import SpeedTestExperimentFactory
 
 
 def run(args: SpeedTestArgs):

@@ -8,15 +8,15 @@ from modupipe.loader import LoaderList, OnCondition, PutToQueue, Sink
 from modupipe.queue import PutNonBlocking, Queue
 from modupipe.runnable import MultiProcess, Runnable
 
-from src.pipeline2.conditions import ChannelSelection
-from src.pipeline2.experiment.pipelines import (
+from src.pipeline.conditions import ChannelSelection
+from src.pipeline.data import ProcessedData, SerialData
+from src.pipeline.experiment.pipelines import (
     FilteringPipelineFactory,
     PlottingPipelineFactory,
     ProcessingPipelineFactory,
     SavingPipelineFactory,
     SourcePipelineFactory,
 )
-from src.pipeline.data import ProcessedData, SerialData
 
 
 class AcquisitionExperimentFactory:

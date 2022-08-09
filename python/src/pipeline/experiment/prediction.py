@@ -8,8 +8,9 @@ from modupipe.runnable import MultiProcess, Runnable
 
 from src.ai.transform_unique import FeaturesTransformEMG
 from src.ai.utilities import load_model
-from src.pipeline2.conditions import ChannelSelection
-from src.pipeline2.experiment.pipelines import (
+from src.pipeline.conditions import ChannelSelection
+from src.pipeline.data import ProcessedData, RangeData, SerialData
+from src.pipeline.experiment.pipelines import (
     ExtractionPipelineFactory,
     FilteringPipelineFactory,
     PlottingPipelineFactory,
@@ -17,7 +18,6 @@ from src.pipeline2.experiment.pipelines import (
     ProcessingPipelineFactory,
     SourcePipelineFactory,
 )
-from src.pipeline.data import ProcessedData, RangeData, SerialData
 
 
 class PredictionExperimentFactory:
