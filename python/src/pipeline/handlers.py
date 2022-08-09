@@ -3,13 +3,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import replace
 from datetime import datetime
-from queue import Queue
-from typing import Any, Dict, Generic, List
+from typing import Any, Generic, List
 
 import numpy as np
 
 from src.pipeline.data import ProcessedData, RangeData, SerialData
-from src.pipeline.types import Animator, CharacteristicsExtractor, PredictionModel
 from src.utils.lists import iter_groups
 from src.utils.loggers import Logger
 from src.utils.plot import PlottingStrategy
@@ -133,36 +131,6 @@ class Plot(DataHandler[ProcessedData[InputType], ProcessedData[InputType]]):
         self._next(input)
 
 
-class Condition(ABC, Generic[InputType]):
-    @abstractmethod
-    def check(self, item: InputType) -> bool:
-        raise NotImplementedError()
-
-
-class ChannelSelection(Condition[ProcessedData]):
-    def __init__(self, channel: int):
-        super().__init__()
-        self.__channel = channel
-
-    def check(self, item: ProcessedData) -> bool:
-        return item.channel == self.__channel
-
-
-class ConditionalHandler(
-    DataHandler[ProcessedData[InputType], ProcessedData[InputType]]
-):
-    def __init__(self, condition: Condition, child: DataHandler) -> None:
-        super().__init__()
-        self.__condition = condition
-        self.__child = child
-
-    def handle(self, input: InputType):
-        if self.__condition.check(input):
-            self.__child.handle(input)
-
-        self._next(input)
-
-
 class TimeChecker(DataHandler):
     def __init__(self):
         super().__init__()
@@ -253,33 +221,3 @@ class ToNumpy(DataHandler[RangeData[InputType], RangeData[np.ndarray]]):
             output = np.array([output])
 
         self._next(replace(input, value=output))
-
-
-class ExtractCharacteristics(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
-    def __init__(self, extractor: CharacteristicsExtractor):
-        super().__init__()
-        self.__extractor = extractor
-
-    def handle(self, input: RangeData[List[int]]):
-        output = self.__extractor.extract(input.value)
-        self._next(replace(input, value=output))
-
-
-class Predict(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
-    def __init__(self, model: PredictionModel):
-        super().__init__()
-        self.__model = model
-
-    def handle(self, input: RangeData[np.ndarray]):
-        output = self.__model.predict(input.value)
-        self._next(replace(input, value=output))
-
-
-class Animate(DataHandler[RangeData[np.ndarray], RangeData[np.ndarray]]):
-    def __init__(self, animator: Animator):
-        super().__init__()
-        self.__animator = animator
-
-    def handle(self, input: RangeData[np.ndarray]):
-        self.__animator.animate(input)
-        self._next(input)

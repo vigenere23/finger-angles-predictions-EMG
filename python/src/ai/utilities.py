@@ -37,7 +37,7 @@ def load_csv_data(file_name, delimiter=";") -> pd.DataFrame:
 
 
 def load_model(model_name) -> RegressorMixin:
-    file_path = os.path.join(MODELS_FOLDER, f"model_{model_name}")
+    file_path = os.path.join(MODELS_FOLDER, model_name)
 
     with open(file_path, "rb") as file:
         return pickle.load(file)

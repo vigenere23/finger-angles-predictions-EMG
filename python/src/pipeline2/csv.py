@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from os import makedirs, path
 from typing import List, Optional
 
-from modupipe.sink import Sink
+from modupipe.loader import Sink
 
 from src.pipeline.data import ProcessedData
 from src.utils.types import InputType
@@ -62,8 +62,8 @@ class CSVWriter(Sink[ProcessedData[InputType]]):
         if header:
             self.__write_rows([header])
 
-    def receive(self, input: ProcessedData[InputType]) -> None:
-        self.__rows_buffer.append(self.__strategy.create_row(input))
+    def load(self, item: ProcessedData[InputType]) -> None:
+        self.__rows_buffer.append(self.__strategy.create_row(item))
 
         if len(self.__rows_buffer) == self.__batch_size:
             self.__write_rows(self.__rows_buffer)

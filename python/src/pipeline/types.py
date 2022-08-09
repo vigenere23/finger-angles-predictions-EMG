@@ -13,9 +13,3 @@ class PredictionModel(ABC):
     @abstractmethod
     def predict(self, X: np.ndarray) -> np.ndarray:
         raise NotImplementedError()
-
-
-class Animator(ABC):
-    @abstractmethod
-    def animate(self, X: np.ndarray) -> None:
-        raise NotImplementedError()
