@@ -12,7 +12,6 @@ from src.pipeline2.csv import CSVWriter, WithoutChannel
 from src.pipeline2.loaders import LogRate, LogTime, Plot
 from src.pipeline2.mappers import (
     ExtractCharacteristics,
-    Log,
     MergeRangeData,
     NotchDC,
     NotchFrequencyOnline,
@@ -116,14 +115,12 @@ class ExtractionPipelineFactory:
         out_queue: Queue[RangeData[np.ndarray]],
         extractor: CharacteristicsExtractor,
     ):
-        logger = ConsoleLogger(name="extractor")
         source = GetFromQueue(in_queue, strategy=GetBlocking())
         mapper = (
             TimedBuffer(time_in_seconds=1 / 10)
             + ToNumpy(to2D=True)
             + ExtractCharacteristics(extractor=extractor)
             + ToNumpy(flatten=True)
-            + Log(logger)
         )
         loader = PutToQueue(out_queue, strategy=PutNonBlocking())
 
@@ -136,10 +133,10 @@ class PredictionPipelineFactory:
     def create(
         self, in_queues: List[Queue[RangeData[np.ndarray]]], model: PredictionModel
     ):
-        logger = ConsoleLogger(name="prediction")
+        # logger = ConsoleLogger(name="prediction")
         source = ExtractorList(
             [GetFromQueue(queue, strategy=GetBlocking()) for queue in in_queues]
         )
-        mapper = MergeRangeData() + ToNumpy() + Predict(model=model) + Log(logger)
+        mapper = MergeRangeData() + ToNumpy() + Predict(model=model)
 
         return NamedRunnable("Prediction pipeline", FullPipeline(source + mapper))

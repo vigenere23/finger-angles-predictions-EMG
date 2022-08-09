@@ -14,6 +14,7 @@ from src.pipeline2.experiment.pipelines import (
     FilteringPipelineFactory,
     PlottingPipelineFactory,
     PredictionPipelineFactory,
+    ProcessingPipelineFactory,
     SourcePipelineFactory,
 )
 from src.pipeline.data import ProcessedData, RangeData, SerialData
@@ -103,5 +104,10 @@ class PredictionExperimentFactory:
                     model=load_model(model_name=model_name),
                 )
                 pipelines.append(prediction_pipeline)
+
+        processing_pipeline = ProcessingPipelineFactory().create(
+            in_queue=source_out_queue, sink=LoaderList(processing_sinks)
+        )
+        pipelines.append(processing_pipeline)
 
         return MultiProcess(pipelines)

@@ -9,9 +9,7 @@ CLASSIFIER_NAME = ""
 classifier = load_model(CLASSIFIER_NAME)
 
 
-def predict(X):
-
-    data_emg = X
+def predict(data_emg):
     start = data_emg.timestamp.min()
     end = data_emg.timestamp.max()
     emg_crop = data_emg.loc[(data_emg.timestamp > start) & (data_emg.timestamp < end)]

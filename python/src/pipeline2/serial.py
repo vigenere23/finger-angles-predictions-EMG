@@ -39,7 +39,7 @@ class RandomSerialSource(Extractor[SerialData[bytes]]):
     def __generate(self) -> bytes:
         return randint(-4000, 4000).to_bytes(2, "big", signed=True)
 
-    def fetch(self) -> Iterator[SerialData[bytes]]:
+    def extract(self) -> Iterator[SerialData[bytes]]:
         end = self.__start + self.__dt
 
         yield SerialData(
@@ -81,7 +81,7 @@ class FrequencySource(Extractor[SerialData[bytes]]):
 
         return int(data).to_bytes(2, "big", signed=True)
 
-    def fetch(self) -> Iterator[SerialData[bytes]]:
+    def extract(self) -> Iterator[SerialData[bytes]]:
         delay_start = datetime.now()
         data: List[bytes] = []
         end = self.__start
@@ -134,7 +134,7 @@ class BaseSerialSource(Extractor[SerialData[bytes]]):
         self.__logger = logger
         self.__verbose = verbose
 
-    def fetch(self) -> Iterator[SerialData[bytes]]:
+    def extract(self) -> Iterator[SerialData[bytes]]:
         start = datetime.now()
         self.__serial.read_until(self.__sync_byte)
 
