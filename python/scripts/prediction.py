@@ -1,5 +1,5 @@
 from src.cli.args import PredictionArgs
-from src.pipeline2.experiment.prediction import PredictionExperimentFactory
+from src.pipeline.experiment.prediction import PredictionExperimentFactory
 
 
 def run(args: PredictionArgs):

@@ -1,7 +1,7 @@
 import numpy as np
 
 from src.ai.utilities import getMAV, getRMS, getSD, getSSC, getVar, getZC
-from src.pipeline.types import CharacteristicsExtractor
+from src.pipeline.base import CharacteristicsExtractor
 
 
 class WindowsTransformer:

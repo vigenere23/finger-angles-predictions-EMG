@@ -1,5 +1,6 @@
 import os
-from typing import List
+from datetime import datetime
+from typing import Any, List
 
 import numpy as np
 from modupipe.extractor import ExtractorList, GetFromQueue
@@ -8,9 +9,11 @@ from modupipe.mapper import PushTo
 from modupipe.queue import GetBlocking, PutNonBlocking, Queue
 from modupipe.runnable import FullPipeline, NamedRunnable, Retry, Runnable
 
-from src.pipeline2.csv import CSVWriter, WithoutChannel
-from src.pipeline2.loaders import LogRate, LogTime, Plot
-from src.pipeline2.mappers import (
+from src.pipeline.base import CharacteristicsExtractor, PredictionModel
+from src.pipeline.csv import CSVWriter, WithoutChannel
+from src.pipeline.data import ProcessedData, RangeData, SerialData
+from src.pipeline.loaders import LogRate, LogTime, Plot
+from src.pipeline.mappers import (
     ExtractCharacteristics,
     MergeRangeData,
     NotchDC,
@@ -21,9 +24,7 @@ from src.pipeline2.mappers import (
     ToInt,
     ToNumpy,
 )
-from src.pipeline2.serial import SerialSourceFactory
-from src.pipeline.data import ProcessedData, RangeData, SerialData
-from src.pipeline.types import CharacteristicsExtractor, PredictionModel
+from src.pipeline.serial import SerialSourceFactory
 from src.utils.loggers import ConsoleLogger
 from src.utils.plot import RefreshingPlot, TimedPlotUpdate
 
@@ -140,3 +141,19 @@ class PredictionPipelineFactory:
         mapper = MergeRangeData() + ToNumpy() + Predict(model=model)
 
         return NamedRunnable("Prediction pipeline", FullPipeline(source + mapper))
+
+
+class QueuesAnalyzer(Runnable):
+    def __init__(self, queues: List[Queue[Any]], timeout: int = 1) -> None:
+        self.queues = queues
+        self.timeout = timeout
+        self.start = datetime.now()
+        self.logger = ConsoleLogger(name="queue usage")
+
+    def run(self):
+        while True:
+            now = datetime.now()
+            if (now - self.start).seconds >= self.timeout:
+                self.start = now
+                for queue in self.queues:
+                    self.logger.debug(f"{queue.name}: {len(queue)}")

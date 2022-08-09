@@ -1,5 +1,5 @@
 from src.cli.args import AcquisitionArgs
-from src.pipeline2.experiment.acquisition import AcquisitionExperimentFactory
+from src.pipeline.experiment.acquisition import AcquisitionExperimentFactory
 
 
 def run(args: AcquisitionArgs):
